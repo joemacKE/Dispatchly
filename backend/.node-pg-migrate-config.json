@@ -1,0 +1,5 @@
+{
+  "database-url": "postgres://postgres:postgres@localhost:5432/dispatchly",
+  "migration-file-language": "sql",
+  "dir": "migrations"
+}

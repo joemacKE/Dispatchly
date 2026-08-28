@@ -7,7 +7,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY tsconfig.json ./
+
 COPY src ./src
+
+COPY migrations ./migrations
 
 RUN npm run build
 

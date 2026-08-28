@@ -7,7 +7,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "node-pg-migration up",
+    "migrate": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down"
   },
   "keywords": [],
