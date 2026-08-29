@@ -16,6 +16,7 @@ import ridersRoutes from "./routes/riders";
 import dispatchRoutes from "./routes/dispatch";
 import riderWorkflowRoutes from "./routes/riderWorkflow";
 import proofOfDeliveryRoutes from "./routes/proofOfDelivery";
+import syncRoutes from "./routes/sync";
 
 import websocketRoutes from "./realtime/websocket";
 
@@ -45,6 +46,7 @@ async function bootstrap() {
     await app.register(dispatchRoutes);
     await app.register(riderWorkflowRoutes);
     await app.register(proofOfDeliveryRoutes);
+    await app.register(syncRoutes);
 
     await app.register(websocketRoutes);
 
