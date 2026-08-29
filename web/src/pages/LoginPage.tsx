@@ -7,30 +7,43 @@ import { useAuth } from "../auth/AuthContext";
 export default function LoginPage() {
   const { token, user, login } = useAuth();
 
-  const [phone, setPhone] = useState("+254700000002");
+  /*
+   * Demo credentials are shown only while running
+   * the Vite development server.
+   *
+   * Production builds will start with empty fields
+   * and will not display the demo account details.
+   */
+  const showDemoAccounts = import.meta.env.DEV;
 
-  const [password, setPassword] = useState("Demo123!");
+  const [phone, setPhone] = useState(showDemoAccounts ? "+254700000002" : "");
+
+  const [password, setPassword] = useState(showDemoAccounts ? "Demo123!" : "");
 
   const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState("");
 
+  /*
+   * If already authenticated, send users to the
+   * correct interface according to their role.
+   */
   if (token && user) {
     return (
       <Navigate replace to={user.role === "rider" ? "/rider" : "/dashboard"} />
     );
   }
 
-  async function submit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setLoading(true);
     setError("");
 
     try {
-      await login(phone, password);
+      await login(phone.trim(), password);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
+      setError(error instanceof Error ? error.message : "Unable to sign in");
     } finally {
       setLoading(false);
     }
@@ -45,13 +58,18 @@ export default function LoginPage() {
 
         <p className="muted">Delivery coordination for modern retailers.</p>
 
-        <form onSubmit={submit} className="form-stack">
+        <form className="form-stack" onSubmit={handleSubmit}>
           <label>
             Phone number
             <input
+              type="tel"
+              name="phone"
+              autoComplete="username"
+              placeholder="+254..."
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               required
+              disabled={loading}
             />
           </label>
 
@@ -59,30 +77,44 @@ export default function LoginPage() {
             Password
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
+              disabled={loading}
             />
           </label>
 
-          {error && <div className="error-box">{error}</div>}
+          {error && (
+            <div className="error-box" role="alert">
+              {error}
+            </div>
+          )}
 
-          <button className="primary-button" type="submit" disabled={loading}>
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={loading || !phone.trim() || !password}
+          >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <div className="demo-box">
-          <strong>Development accounts</strong>
+        {showDemoAccounts && (
+          <div className="demo-box">
+            <strong>Development accounts</strong>
 
-          <span>Retailer: +254700000002</span>
+            <span>Retailer: +254700000002</span>
 
-          <span>Dispatcher: +254700000003</span>
+            <span>Dispatcher: +254700000003</span>
 
-          <span>Rider: +254700000004</span>
+            <span>Rider: +254700000004</span>
 
-          <span>Password: Demo123!</span>
-        </div>
+            <span>Password: Demo123!</span>
+          </div>
+        )}
       </section>
     </main>
   );

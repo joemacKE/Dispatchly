@@ -1,10 +1,14 @@
+cat > .dockerignore <<'EOF'
 node_modules
 dist
 .git
-.gitignore
+.github
 .env
 .env.*
+!.env.production.example
 *.zip
 migration_archive
 npm-debug.log
 .DS_Store
+coverage
+EOF

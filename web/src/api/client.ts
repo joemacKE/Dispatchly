@@ -5,20 +5,76 @@ import type {
   Rider,
 } from "../types";
 
+/*
+ * ==========================================================
+ * API CONFIGURATION
+ * ==========================================================
+ */
+
+const configuredApiUrl =
+  import.meta.env
+    .VITE_API_URL
+    ?.trim();
+
+/*
+ * Production must explicitly provide the public
+ * HTTPS backend URL.
+ */
+if (
+  import.meta.env.PROD &&
+  !configuredApiUrl
+) {
+  throw new Error(
+    "VITE_API_URL is required for production builds"
+  );
+}
+
+/*
+ * Production API traffic must use HTTPS.
+ *
+ * This also means our WebSocket connection will be
+ * converted from https:// to wss:// by the dashboard.
+ */
+if (
+  import.meta.env.PROD &&
+  configuredApiUrl &&
+  !configuredApiUrl.startsWith(
+    "https://"
+  )
+) {
+  throw new Error(
+    "Production VITE_API_URL must use HTTPS"
+  );
+}
+
 export const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:8000";
+  (
+    configuredApiUrl ||
+    "http://localhost:8000"
+  ).replace(/\/+$/, "");
+
+/*
+ * ==========================================================
+ * SHARED RESPONSE HANDLING
+ * ==========================================================
+ */
 
 async function parseResponse<T>(
   response: Response
 ): Promise<T> {
   let data: unknown;
 
+  /*
+   * Some failure responses may not contain JSON.
+   */
   try {
-    data = await response.json();
+    data =
+      await response.json();
   } catch {
     throw new Error(
-      `Server returned an invalid response (${response.status})`
+      response.ok
+        ? "Server returned an invalid response"
+        : `Request failed (${response.status})`
     );
   }
 
@@ -36,29 +92,33 @@ async function parseResponse<T>(
 }
 
 /*
- * Authentication
+ * ==========================================================
+ * AUTHENTICATION
+ * ==========================================================
  */
 
 export async function login(
   phone: string,
   password: string
 ) {
-  const response = await fetch(
-    `${API_URL}/auth/login`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/auth/login`,
+      {
+        method: "POST",
 
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify({
-        phone,
-        password,
-      }),
-    }
-  );
+        body:
+          JSON.stringify({
+            phone,
+            password,
+          }),
+      }
+    );
 
   return parseResponse<LoginResponse>(
     response
@@ -66,21 +126,24 @@ export async function login(
 }
 
 /*
- * Retailer / Dispatcher
+ * ==========================================================
+ * RETAILER / DISPATCHER
+ * ==========================================================
  */
 
 export async function getDeliveries(
   token: string
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests`,
-    {
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
-      },
-    }
-  );
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
 
   return parseResponse<{
     success: boolean;
@@ -98,22 +161,26 @@ export async function createDelivery(
     item_description: string;
   }
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-        "Content-Type":
-          "application/json",
-      },
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify(payload),
-    }
-  );
+        body:
+          JSON.stringify(
+            payload
+          ),
+      }
+    );
 
   return parseResponse<{
     success: boolean;
@@ -124,15 +191,16 @@ export async function createDelivery(
 export async function getRiders(
   token: string
 ) {
-  const response = await fetch(
-    `${API_URL}/riders`,
-    {
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
-      },
-    }
-  );
+  const response =
+    await fetch(
+      `${API_URL}/riders`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
 
   return parseResponse<{
     success: boolean;
@@ -147,25 +215,29 @@ export async function assignDelivery(
   riderId: string,
   version: number
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests/${deliveryId}/assign`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests/${deliveryId}/assign`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-        "Content-Type":
-          "application/json",
-      },
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify({
-        rider_id: riderId,
-        version,
-      }),
-    }
-  );
+        body:
+          JSON.stringify({
+            rider_id:
+              riderId,
+
+            version,
+          }),
+      }
+    );
 
   return parseResponse<{
     success: boolean;
@@ -173,19 +245,26 @@ export async function assignDelivery(
   }>(response);
 }
 
+/*
+ * ==========================================================
+ * DELIVERY QR
+ * ==========================================================
+ */
+
 export async function getDeliveryQr(
   token: string,
   deliveryId: string
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests/${deliveryId}/qr`,
-    {
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
-      },
-    }
-  );
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests/${deliveryId}/qr`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
 
   const data =
     await parseResponse<
@@ -193,20 +272,10 @@ export async function getDeliveryQr(
     >(response);
 
   /*
-   * Direct response shapes:
-   *
-   * {
-   *   qr_token: "..."
-   * }
-   *
-   * {
-   *   token: "..."
-   * }
-   *
-   * {
-   *   qrToken: "..."
-   * }
+   * Support the response shapes used during development
+   * while keeping one normalized return value for the UI.
    */
+
   if (
     typeof data.qr_token ===
     "string"
@@ -228,13 +297,6 @@ export async function getDeliveryQr(
     return data.qrToken;
   }
 
-  /*
-   * Some APIs may return:
-   *
-   * {
-   *   qr: "..."
-   * }
-   */
   if (
     typeof data.qr ===
     "string"
@@ -243,7 +305,7 @@ export async function getDeliveryQr(
   }
 
   /*
-   * Or:
+   * Nested:
    *
    * {
    *   qr: {
@@ -285,7 +347,7 @@ export async function getDeliveryQr(
   }
 
   /*
-   * Or:
+   * Nested:
    *
    * {
    *   delivery: {
@@ -327,7 +389,7 @@ export async function getDeliveryQr(
   }
 
   /*
-   * Or:
+   * Nested:
    *
    * {
    *   data: {
@@ -340,59 +402,57 @@ export async function getDeliveryQr(
     typeof data.data ===
       "object"
   ) {
-    const nestedData =
+    const nested =
       data.data as Record<
         string,
         unknown
       >;
 
     if (
-      typeof nestedData.qr_token ===
+      typeof nested.qr_token ===
       "string"
     ) {
-      return nestedData.qr_token;
+      return nested.qr_token;
     }
 
     if (
-      typeof nestedData.token ===
+      typeof nested.token ===
       "string"
     ) {
-      return nestedData.token;
+      return nested.token;
     }
   }
 
   /*
-   * Helpful during development.
+   * We intentionally do not log the response here.
    *
-   * Do not log the QR token itself once
-   * we move to production.
+   * The successful response can contain a sensitive
+   * delivery QR credential.
    */
-  console.error(
-    "Unexpected QR API response:",
-    data
-  );
-
   throw new Error(
     "QR token was not returned by the server"
   );
 }
 
 /*
- * Rider
+ * ==========================================================
+ * RIDER DELIVERIES
+ * ==========================================================
  */
 
 export async function getMyDeliveries(
   token: string
 ) {
-  const response = await fetch(
-    `${API_URL}/riders/me/deliveries`,
-    {
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
-      },
-    }
-  );
+  const response =
+    await fetch(
+      `${API_URL}/riders/me/deliveries`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
 
   return parseResponse<{
     success: boolean;
@@ -400,6 +460,12 @@ export async function getMyDeliveries(
     deliveries: Delivery[];
   }>(response);
 }
+
+/*
+ * ==========================================================
+ * RIDER STATUS TRANSITIONS
+ * ==========================================================
+ */
 
 export async function updateRiderStatus(
   token: string,
@@ -410,6 +476,7 @@ export async function updateRiderStatus(
       | "in_transit";
 
     version: number;
+
     client_event_id: string;
 
     note?: string;
@@ -418,38 +485,49 @@ export async function updateRiderStatus(
     lng?: number;
   }
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests/${deliveryId}/status`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests/${deliveryId}/status`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-        "Content-Type":
-          "application/json",
-      },
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify(payload),
-    }
-  );
+        body:
+          JSON.stringify(
+            payload
+          ),
+      }
+    );
 
   return parseResponse<{
     success: boolean;
+
     idempotent?: boolean;
+
     delivery?: Delivery;
+
     status?: string;
+
     version?: number;
   }>(response);
 }
 
 /*
- * Offline synchronization
+ * ==========================================================
+ * OFFLINE SYNCHRONIZATION
+ * ==========================================================
  */
 
 export type OfflineSyncEvent = {
   client_event_id: string;
+
   delivery_request_id: string;
 
   to_status:
@@ -468,6 +546,7 @@ export type OfflineSyncEvent = {
 
 export type SyncResult = {
   client_event_id: string;
+
   delivery_request_id: string;
 
   result:
@@ -477,13 +556,16 @@ export type SyncResult = {
     | "rejected";
 
   status?: string;
+
   version?: number;
 
   error?: {
     code?: string;
+
     message?: string;
 
     current_status?: string;
+
     current_version?: number;
   };
 };
@@ -492,43 +574,52 @@ export async function syncOfflineEvents(
   token: string,
   events: OfflineSyncEvent[]
 ) {
-  const response = await fetch(
-    `${API_URL}/sync`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/sync`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-        "Content-Type":
-          "application/json",
-      },
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify({
-        events,
-      }),
-    }
-  );
+        body:
+          JSON.stringify({
+            events,
+          }),
+      }
+    );
 
   return parseResponse<{
     success: boolean;
 
     summary: {
       received: number;
+
       applied: number;
+
       duplicates: number;
+
       conflicts: number;
+
       rejected: number;
     };
 
     results: SyncResult[];
+
     server_time: string;
   }>(response);
 }
 
 /*
- * Proof of delivery
+ * ==========================================================
+ * PROOF OF DELIVERY
+ * ==========================================================
  */
 
 export async function submitProofOfDelivery(
@@ -536,36 +627,50 @@ export async function submitProofOfDelivery(
   deliveryId: string,
   payload: {
     scanned_qr_token: string;
+
     version: number;
+
     client_event_id: string;
 
     recipient_name?: string;
+
     photo_url?: string;
+
     signature_url?: string;
   }
 ) {
-  const response = await fetch(
-    `${API_URL}/delivery-requests/${deliveryId}/pod`,
-    {
-      method: "POST",
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests/${deliveryId}/pod`,
+      {
+        method: "POST",
 
-      headers: {
-        Authorization:
-          `Bearer ${token}`,
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
 
-        "Content-Type":
-          "application/json",
-      },
+          "Content-Type":
+            "application/json",
+        },
 
-      body: JSON.stringify(payload),
-    }
-  );
+        body:
+          JSON.stringify(
+            payload
+          ),
+      }
+    );
 
   return parseResponse<{
     success: boolean;
+
     idempotent?: boolean;
+
     delivery?: Delivery;
+
+    proof_of_delivery?: unknown;
+
     status?: string;
+
     version?: number;
   }>(response);
 }

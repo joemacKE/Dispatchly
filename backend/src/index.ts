@@ -15,6 +15,8 @@ import {
   redis,
 } from "./config/redis";
 
+import { env } from "./config/env";
+
 import authRoutes from "./routes/auth";
 import deliveryRequestsRoutes from "./routes/deliveryRequests";
 import ridersRoutes from "./routes/riders";
@@ -32,13 +34,18 @@ import websocketRoutes from "./realtime/websocket";
  */
 
 const app = Fastify({
-  logger: true,
+  logger: {
+    level:
+      env.IS_PRODUCTION
+        ? "info"
+        : "debug",
+  },
 
-  /*
-   * Maximum request payload:
-   * 1 MiB.
-   */
-  bodyLimit: 1_048_576,
+  bodyLimit:
+    1_048_576,
+
+  trustProxy:
+    env.TRUST_PROXY,
 });
 
 /*
@@ -55,13 +62,6 @@ async function bootstrap() {
      * --------------------------------------------------------
      */
 
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!jwtSecret) {
-      throw new Error(
-        "JWT_SECRET environment variable is required"
-      );
-    }
 
     /*
      * --------------------------------------------------------
@@ -80,9 +80,10 @@ async function bootstrap() {
      * --------------------------------------------------------
      */
 
-    await app.register(jwt, {
-      secret: jwtSecret,
-    });
+   await app.register(jwt, {
+  secret:
+    env.JWT_SECRET,
+});
 
     /*
      * --------------------------------------------------------
@@ -115,13 +116,15 @@ async function bootstrap() {
           version: "0.1.0",
         },
 
-        servers: [
+       servers: [
           {
             url:
-              "http://localhost:8000",
+              env.API_PUBLIC_URL,
 
             description:
-              "Local development",
+              env.IS_PRODUCTION
+                ? "Production"
+                : "Local development",
           },
         ],
 
@@ -152,18 +155,9 @@ async function bootstrap() {
      * --------------------------------------------------------
      */
 
-    const allowedOrigins = (
-      process.env.CORS_ORIGINS ??
-      "http://localhost:5173,http://localhost:3001"
-    )
-      .split(",")
-      .map((origin) =>
-        origin.trim()
-      )
-      .filter(Boolean);
-
-    await app.register(cors, {
-      origin: allowedOrigins,
+      await app.register(cors, {
+      origin:
+        env.CORS_ORIGINS,
 
       methods: [
         "GET",
@@ -509,10 +503,7 @@ async function bootstrap() {
      */
 
     const port =
-      Number(
-        process.env.PORT ??
-        3000
-      );
+  env.PORT;
 
     await app.listen({
       port,
