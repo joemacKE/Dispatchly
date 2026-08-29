@@ -17,3 +17,5 @@ migration_archive/
 
 # macOS
 .DS_Store
+
+.env.local
