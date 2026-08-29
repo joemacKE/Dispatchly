@@ -4,6 +4,7 @@ import deliveryRequestsRoutes from "./routes/deliveryRequests";
 import ridersRoutes from "./routes/riders";
 import dispatchRoutes from "./routes/dispatch";
 import riderWorkflowRoutes from "./routes/riderWorkflow";
+import proofOfDeliveryRoutes from "./routes/proofOfDelivery";
 
 import { db } from "./config/db";
 import authRoutes from "./routes/auth";
@@ -28,6 +29,7 @@ app.register(deliveryRequestsRoutes);
 app.register(ridersRoutes);
 app.register(dispatchRoutes);
 app.register(riderWorkflowRoutes);
+app.register(proofOfDeliveryRoutes);
 // Health check
 app.get("/health", async () => {
   const result = await db.query("SELECT NOW()");
