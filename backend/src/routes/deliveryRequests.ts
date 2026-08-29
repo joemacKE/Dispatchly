@@ -202,4 +202,117 @@ export default async function deliveryRequestsRoutes(
       }
     }
   );
+    app.get(
+    "/delivery-requests",
+    {
+      preHandler: async (request, reply) => {
+        try {
+          await request.jwtVerify();
+        } catch {
+          return reply.status(401).send({
+            success: false,
+            error: {
+              code: "UNAUTHORIZED",
+              message: "A valid access token is required",
+            },
+          });
+        }
+
+        const user = request.user as AuthUser;
+
+        if (!["dispatcher", "retailer"].includes(user.role)) {
+          return reply.status(403).send({
+            success: false,
+            error: {
+              code: "FORBIDDEN",
+              message:
+                "Only retailer and dispatcher users can view delivery requests",
+            },
+          });
+        }
+      },
+    },
+    async (request, reply) => {
+      const user = request.user as AuthUser;
+
+      const query = request.query as {
+        status?: string;
+      };
+
+      const allowedStatuses = [
+        "pending",
+        "assigned",
+        "picked_up",
+        "in_transit",
+        "delivered",
+        "cancelled",
+      ];
+
+      if (
+        query.status &&
+        !allowedStatuses.includes(query.status)
+      ) {
+        return reply.status(422).send({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid delivery status",
+          },
+        });
+      }
+
+      const values: unknown[] = [user.business_id];
+
+      let sql = `
+        SELECT
+          dr.id,
+          dr.customer_name,
+          dr.customer_phone,
+          dr.customer_address,
+          dr.item_description,
+          dr.status,
+          dr.version,
+          dr.created_at,
+          dr.updated_at,
+
+          a.rider_id,
+          a.assigned_at,
+
+          rider.name AS rider_name,
+          rider.phone AS rider_phone
+
+        FROM delivery_requests dr
+
+        LEFT JOIN assignments a
+          ON a.delivery_request_id = dr.id
+          AND a.is_current = TRUE
+
+        LEFT JOIN users rider
+          ON rider.id = a.rider_id
+
+        WHERE dr.business_id = $1
+      `;
+
+      if (query.status) {
+        values.push(query.status);
+
+        sql += `
+          AND dr.status = $2::delivery_status
+        `;
+      }
+
+      sql += `
+        ORDER BY dr.created_at DESC
+        LIMIT 100
+      `;
+
+      const result = await db.query(sql, values);
+
+      return reply.send({
+        success: true,
+        count: result.rows.length,
+        deliveries: result.rows,
+      });
+    }
+  );
 }

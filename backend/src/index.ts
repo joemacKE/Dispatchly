@@ -1,6 +1,8 @@
 import Fastify from "fastify";
 import jwt from "@fastify/jwt";
 import deliveryRequestsRoutes from "./routes/deliveryRequests";
+import ridersRoutes from "./routes/riders";
+import dispatchRoutes from "./routes/dispatch";
 
 import { db } from "./config/db";
 import authRoutes from "./routes/auth";
@@ -22,7 +24,8 @@ app.register(jwt, {
 
 app.register(authRoutes);
 app.register(deliveryRequestsRoutes);
-
+app.register(ridersRoutes);
+app.register(dispatchRoutes);
 // Health check
 app.get("/health", async () => {
   const result = await db.query("SELECT NOW()");
