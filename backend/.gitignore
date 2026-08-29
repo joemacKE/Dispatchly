@@ -6,3 +6,5 @@ dist/
 migration_archive/
 .DS_Store
 npm-debug.log
+
+!.env.production.example

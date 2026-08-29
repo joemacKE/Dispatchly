@@ -53,7 +53,9 @@ export async function disconnectRedis() {
     await redisSubscriber.quit();
   }
 
-  if (redis.isOpen) {
+  if (
+    redis.isOpen
+  ) {
     await redis.quit();
   }
 }

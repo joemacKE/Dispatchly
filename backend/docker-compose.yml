@@ -1,46 +1,87 @@
 services:
   postgres:
     image: postgres:16
-    restart: unless-stopped
+
     environment:
-      POSTGRES_DB: dispatchly
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dispatchly
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dispatchly"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U postgres -d dispatchly"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
 
+    restart: unless-stopped
+
+
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
+
     ports:
       - "6379:6379"
+
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  backend:
-    build: .
     restart: unless-stopped
+
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
     environment:
+      NODE_ENV: development
+
+      PORT: "3000"
+
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/dispatchly
+
       REDIS_URL: redis://redis:6379
+
       JWT_SECRET: dispatchly-local-development-secret-change-in-production
+
       QR_SECRET: dispatchly-local-qr-secret-change-in-production
-      PORT: 3000
+
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3001
+
+      API_PUBLIC_URL: http://localhost:8000
+
+      TRUST_PROXY: "false"
+
     ports:
       - "8000:3000"
+
+    restart: unless-stopped
+
 
 volumes:
   postgres_data:
