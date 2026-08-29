@@ -1,0 +1,19 @@
+
+# Node dependencies
+backend/node_modules/
+
+# TypeScript build output
+backend/dist/
+
+# Environment files
+backend/.env
+backend/.env.*
+
+# Local archives
+*.zip
+
+# Migration backups
+migration_archive/
+
+# macOS
+.DS_Store
