@@ -17,6 +17,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/dispatchly
       JWT_SECRET: dispatchly-local-development-secret-change-in-production
+      QR_SECRET: dispatchly-local-qr-secret-change-in-production
       PORT: 3000
     ports:
       - "8000:3000"

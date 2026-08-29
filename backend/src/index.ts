@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import jwt from "@fastify/jwt";
+import deliveryRequestsRoutes from "./routes/deliveryRequests";
 
 import { db } from "./config/db";
 import authRoutes from "./routes/auth";
@@ -7,6 +8,7 @@ import authRoutes from "./routes/auth";
 const app = Fastify({
   logger: true,
 });
+
 
 const jwtSecret = process.env.JWT_SECRET;
 
@@ -19,6 +21,7 @@ app.register(jwt, {
 });
 
 app.register(authRoutes);
+app.register(deliveryRequestsRoutes);
 
 // Health check
 app.get("/health", async () => {
