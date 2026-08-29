@@ -1,21 +1,46 @@
 import Fastify from "fastify";
+import jwt from "@fastify/jwt";
+
 import { db } from "./config/db";
-import assignmentsRoute from "./routes/assignments"
+import authRoutes from "./routes/auth";
 
+const app = Fastify({
+  logger: true,
+});
 
+const jwtSecret = process.env.JWT_SECRET;
 
-const app = Fastify({ logger: true });
-app.register(assignmentsRoute)
+if (!jwtSecret) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
+app.register(jwt, {
+  secret: jwtSecret,
+});
+
+app.register(authRoutes);
 
 // Health check
 app.get("/health", async () => {
   const result = await db.query("SELECT NOW()");
-  return { status: "ok", time: result.rows[0].now };
+
+  return {
+    status: "ok",
+    database: "connected",
+    time: result.rows[0].now,
+  };
 });
 
-app.listen({ port: 3000, host: "0.0.0.0" }, (err) => {
-  if (err) {
-    app.log.error(err);
+const start = async () => {
+  try {
+    await app.listen({
+      port: Number(process.env.PORT || 3000),
+      host: "0.0.0.0",
+    });
+  } catch (error) {
+    app.log.error(error);
     process.exit(1);
   }
-});
+};
+
+start();
