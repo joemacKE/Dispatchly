@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { QRCodeSVG } from "qrcode.react";
+
 import type { Delivery, Rider } from "../types";
 
 type Props = {
@@ -31,31 +33,32 @@ export default function DeliveryCard({
 
   const [qrLoading, setQrLoading] = useState(false);
 
+  const [showQr, setShowQr] = useState(false);
+
   const [error, setError] = useState("");
 
   async function revealQr() {
-    setQrLoading(true);
     setError("");
+
+    if (qrToken) {
+      setShowQr(true);
+      return;
+    }
+
+    setQrLoading(true);
 
     try {
       const token = await onGetQr(delivery.id);
 
       setQrToken(token);
+      setShowQr(true);
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Unable to load QR token",
+        error instanceof Error ? error.message : "Unable to load QR code",
       );
     } finally {
       setQrLoading(false);
     }
-  }
-
-  async function copyQr() {
-    if (!qrToken) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(qrToken);
   }
 
   return (
@@ -75,21 +78,25 @@ export default function DeliveryCard({
       <div className="delivery-grid">
         <div>
           <small>Phone</small>
+
           <strong>{delivery.customer_phone}</strong>
         </div>
 
         <div>
           <small>Package</small>
+
           <strong>{delivery.item_description}</strong>
         </div>
 
         <div>
           <small>Version</small>
+
           <strong>{delivery.version}</strong>
         </div>
 
         <div>
           <small>Rider</small>
+
           <strong>{delivery.rider_name || "Not assigned"}</strong>
         </div>
       </div>
@@ -101,9 +108,11 @@ export default function DeliveryCard({
             onChange={(event) => {
               const riderId = event.target.value;
 
-              if (riderId) {
-                void onAssign(delivery, riderId);
+              if (!riderId) {
+                return;
               }
+
+              void onAssign(delivery, riderId);
             }}
           >
             <option value="">Assign rider...</option>
@@ -121,25 +130,42 @@ export default function DeliveryCard({
 
       {delivery.status !== "cancelled" && (
         <div className="qr-section">
-          {!qrToken ? (
+          {!showQr ? (
             <button
+              type="button"
               className="secondary-button"
               disabled={qrLoading}
               onClick={() => void revealQr()}
             >
-              {qrLoading ? "Loading..." : "Reveal QR token"}
+              {qrLoading ? "Loading QR..." : "Show Delivery QR"}
             </button>
           ) : (
-            <>
-              <code className="qr-token">{qrToken}</code>
+            <div className="customer-qr">
+              <div className="qr-image">
+                <QRCodeSVG
+                  value={qrToken}
+                  size={220}
+                  level="H"
+                  marginSize={2}
+                />
+              </div>
 
-              <button
-                className="secondary-button"
-                onClick={() => void copyQr()}
-              >
-                Copy token
-              </button>
-            </>
+              <div className="qr-information">
+                <strong>Delivery QR</strong>
+
+                <span>
+                  Present this code to the rider when the package arrives.
+                </span>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setShowQr(false)}
+                >
+                  Hide QR
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
