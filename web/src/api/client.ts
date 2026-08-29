@@ -192,6 +192,21 @@ export async function getDeliveryQr(
       Record<string, unknown>
     >(response);
 
+  /*
+   * Direct response shapes:
+   *
+   * {
+   *   qr_token: "..."
+   * }
+   *
+   * {
+   *   token: "..."
+   * }
+   *
+   * {
+   *   qrToken: "..."
+   * }
+   */
   if (
     typeof data.qr_token ===
     "string"
@@ -206,6 +221,78 @@ export async function getDeliveryQr(
     return data.token;
   }
 
+  if (
+    typeof data.qrToken ===
+    "string"
+  ) {
+    return data.qrToken;
+  }
+
+  /*
+   * Some APIs may return:
+   *
+   * {
+   *   qr: "..."
+   * }
+   */
+  if (
+    typeof data.qr ===
+    "string"
+  ) {
+    return data.qr;
+  }
+
+  /*
+   * Or:
+   *
+   * {
+   *   qr: {
+   *     token: "..."
+   *   }
+   * }
+   */
+  if (
+    data.qr &&
+    typeof data.qr ===
+      "object"
+  ) {
+    const qr =
+      data.qr as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      typeof qr.token ===
+      "string"
+    ) {
+      return qr.token;
+    }
+
+    if (
+      typeof qr.qr_token ===
+      "string"
+    ) {
+      return qr.qr_token;
+    }
+
+    if (
+      typeof qr.value ===
+      "string"
+    ) {
+      return qr.value;
+    }
+  }
+
+  /*
+   * Or:
+   *
+   * {
+   *   delivery: {
+   *     qr_token: "..."
+   *   }
+   * }
+   */
   if (
     data.delivery &&
     typeof data.delivery ===
@@ -223,7 +310,67 @@ export async function getDeliveryQr(
     ) {
       return delivery.qr_token;
     }
+
+    if (
+      typeof delivery.qrToken ===
+      "string"
+    ) {
+      return delivery.qrToken;
+    }
+
+    if (
+      typeof delivery.token ===
+      "string"
+    ) {
+      return delivery.token;
+    }
   }
+
+  /*
+   * Or:
+   *
+   * {
+   *   data: {
+   *     qr_token: "..."
+   *   }
+   * }
+   */
+  if (
+    data.data &&
+    typeof data.data ===
+      "object"
+  ) {
+    const nestedData =
+      data.data as Record<
+        string,
+        unknown
+      >;
+
+    if (
+      typeof nestedData.qr_token ===
+      "string"
+    ) {
+      return nestedData.qr_token;
+    }
+
+    if (
+      typeof nestedData.token ===
+      "string"
+    ) {
+      return nestedData.token;
+    }
+  }
+
+  /*
+   * Helpful during development.
+   *
+   * Do not log the QR token itself once
+   * we move to production.
+   */
+  console.error(
+    "Unexpected QR API response:",
+    data
+  );
 
   throw new Error(
     "QR token was not returned by the server"
