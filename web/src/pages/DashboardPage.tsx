@@ -8,6 +8,7 @@ import {
   createDelivery,
   getDeliveries,
   getDeliveryQr,
+  getPickupQr,
   getRiders,
 } from "../api/client";
 
@@ -180,6 +181,30 @@ export default function DashboardPage() {
     return getDeliveryQr(token, deliveryId);
   }
 
+  async function getPickupVerificationQr(
+    deliveryId: string
+  ) {
+    if (!token) {
+      throw new Error(
+        "Authentication required"
+      );
+    }
+
+    if (
+      user?.role !==
+      "retailer"
+    ) {
+      throw new Error(
+        "Only the retailer can display the pickup QR code"
+      );
+    }
+
+    return getPickupQr(
+      token,
+      deliveryId
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -284,8 +309,10 @@ export default function DashboardPage() {
                     delivery={delivery}
                     riders={riders}
                     isDispatcher={user.role === "dispatcher"}
+                    isRetailer={user.role === "retailer"}
                     onAssign={assign}
                     onGetQr={getQr}
+                    onGetPickupQr={getPickupVerificationQr}
                   />
                 ))}
               </div>

@@ -463,31 +463,67 @@ export async function getMyDeliveries(
 
 /*
  * ==========================================================
- * RIDER STATUS TRANSITIONS
+ * PICKUP VERIFICATION
  * ==========================================================
  */
 
-export async function updateRiderStatus(
+export async function getPickupQr(
+  token: string,
+  deliveryId: string
+) {
+  const response =
+    await fetch(
+      `${API_URL}/delivery-requests/${deliveryId}/pickup-qr`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+  const data =
+    await parseResponse<{
+      success: boolean;
+
+      delivery_id?: string;
+
+      version?: number;
+
+      pickup_qr_token?: string;
+    }>(response);
+
+  if (
+    typeof data.pickup_qr_token !==
+      "string" ||
+    !data.pickup_qr_token
+  ) {
+    throw new Error(
+      "Pickup QR token was not returned by the server"
+    );
+  }
+
+  return data.pickup_qr_token;
+}
+
+export async function verifyPickup(
   token: string,
   deliveryId: string,
   payload: {
-    to_status:
-      | "picked_up"
-      | "in_transit";
+    scanned_pickup_qr_token: string;
 
     version: number;
 
     client_event_id: string;
 
-    note?: string;
-
     lat?: number;
+
     lng?: number;
   }
 ) {
   const response =
     await fetch(
-      `${API_URL}/delivery-requests/${deliveryId}/status`,
+      `${API_URL}/delivery-requests/${deliveryId}/pickup`,
       {
         method: "POST",
 
@@ -509,13 +545,11 @@ export async function updateRiderStatus(
   return parseResponse<{
     success: boolean;
 
+    pickup_verified?: boolean;
+
     idempotent?: boolean;
 
     delivery?: Delivery;
-
-    status?: string;
-
-    version?: number;
   }>(response);
 }
 

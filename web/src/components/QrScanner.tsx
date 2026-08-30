@@ -1,30 +1,58 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { Html5Qrcode } from "html5-qrcode";
+import {
+  Html5Qrcode,
+} from "html5-qrcode";
 
 type Props = {
-  onScan: (qrValue: string) => void;
+  onScan: (
+    qrValue: string
+  ) => void;
 
   onCancel: () => void;
+
+  title?: string;
+
+  instruction?: string;
 };
 
-export default function QrScanner({ onScan, onCancel }: Props) {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+export default function QrScanner({
+  onScan,
+  onCancel,
+  title = "Scan Delivery QR",
+  instruction =
+    "Point the camera at the customer's Reflex QR code.",
+}: Props) {
+  const scannerRef =
+    useRef<Html5Qrcode | null>(
+      null
+    );
 
-  const completedRef = useRef(false);
+  const completedRef =
+    useRef(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
-    const scanner = new Html5Qrcode("reflex-qr-reader");
+    const scanner =
+      new Html5Qrcode(
+        "reflex-qr-reader"
+      );
 
-    scannerRef.current = scanner;
+    scannerRef.current =
+      scanner;
 
     async function start() {
       try {
         await scanner.start(
           {
-            facingMode: "environment",
+            facingMode:
+              "environment",
           },
 
           {
@@ -36,15 +64,22 @@ export default function QrScanner({ onScan, onCancel }: Props) {
             },
           },
 
-          async (decodedText) => {
-            if (completedRef.current) {
+          async (
+            decodedText
+          ) => {
+            if (
+              completedRef.current
+            ) {
               return;
             }
 
-            completedRef.current = true;
+            completedRef.current =
+              true;
 
             try {
-              if (scanner.isScanning) {
+              if (
+                scanner.isScanning
+              ) {
                 await scanner.stop();
               }
             } catch {
@@ -57,17 +92,16 @@ export default function QrScanner({ onScan, onCancel }: Props) {
 
           () => {
             /*
-             * Individual frames without
-             * a QR code are normal.
-             *
-             * Do not show them as
-             * user-facing errors.
+             * Frames without a
+             * QR code are normal.
              */
-          },
+          }
         );
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Unable to start camera",
+          error instanceof Error
+            ? error.message
+            : "Unable to start camera"
         );
       }
     }
@@ -75,28 +109,37 @@ export default function QrScanner({ onScan, onCancel }: Props) {
     void start();
 
     return () => {
-      completedRef.current = true;
+      completedRef.current =
+        true;
 
-      const current = scannerRef.current;
+      const current =
+        scannerRef.current;
 
       if (!current) {
         return;
       }
 
       if (current.isScanning) {
-        void current.stop().catch(() => {
-          // Ignore shutdown race.
-        });
+        void current
+          .stop()
+          .catch(() => {
+            // Ignore shutdown race.
+          });
       }
     };
   }, [onScan]);
 
   async function closeScanner() {
-    completedRef.current = true;
+    completedRef.current =
+      true;
 
     try {
-      if (scannerRef.current?.isScanning) {
-        await scannerRef.current.stop();
+      if (
+        scannerRef.current
+          ?.isScanning
+      ) {
+        await scannerRef.current
+          .stop();
       }
     } catch {
       // Safe to ignore.
@@ -110,32 +153,44 @@ export default function QrScanner({ onScan, onCancel }: Props) {
       <section className="scanner-modal">
         <div className="scanner-heading">
           <div>
-            <h3>Scan Delivery QR</h3>
+            <h3>{title}</h3>
 
-            <p>Point the camera at the customer's Reflex QR code.</p>
+            <p>{instruction}</p>
           </div>
 
           <button
             type="button"
             className="scanner-close"
-            onClick={() => void closeScanner()}
+            onClick={() =>
+              void closeScanner()
+            }
           >
             ×
           </button>
         </div>
 
-        <div id="reflex-qr-reader" className="qr-reader" />
+        <div
+          id="reflex-qr-reader"
+          className="qr-reader"
+        />
 
-        {error && <div className="error-box">{error}</div>}
+        {error && (
+          <div className="error-box">
+            {error}
+          </div>
+        )}
 
         <p className="scanner-help">
-          Camera access is used only while this scanner is open.
+          Camera access is used only
+          while this scanner is open.
         </p>
 
         <button
           type="button"
           className="secondary-button scanner-cancel"
-          onClick={() => void closeScanner()}
+          onClick={() =>
+            void closeScanner()
+          }
         >
           Cancel
         </button>
