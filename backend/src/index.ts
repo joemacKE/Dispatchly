@@ -24,6 +24,7 @@ import dispatchRoutes from "./routes/dispatch";
 import riderWorkflowRoutes from "./routes/riderWorkflow";
 import proofOfDeliveryRoutes from "./routes/proofOfDelivery";
 import syncRoutes from "./routes/sync";
+import pickupVerificationRoutes from "./routes/pickupVerification";
 
 import websocketRoutes from "./realtime/websocket";
 
@@ -208,7 +209,9 @@ async function bootstrap() {
      * Therefore we safely narrow only the properties
      * required by this handler.
      */
-
+await app.register(
+  pickupVerificationRoutes
+);
     app.setErrorHandler(
       async (
         error,

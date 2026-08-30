@@ -3,6 +3,7 @@
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8000}"
+SMOKE_TEST_PASSWORD="${SMOKE_TEST_PASSWORD:-}"
 
 TMP_DIR="$(mktemp -d)"
 
@@ -20,6 +21,12 @@ fail() {
   printf "✗ %s\n" "$1"
   exit 1
 }
+
+if [ -z "$SMOKE_TEST_PASSWORD" ]; then
+  fail "SMOKE_TEST_PASSWORD is required"
+fi
+
+export SMOKE_TEST_PASSWORD
 
 echo
 echo "Reflex API smoke tests"
@@ -51,14 +58,23 @@ pass "Health check"
 # Valid retailer authentication
 # ------------------------------------------------------------
 
+LOGIN_PAYLOAD="$(
+  python3 <<'PYLOGIN'
+import json
+import os
+
+print(json.dumps({
+    "phone": "+254700000002",
+    "password": os.environ["SMOKE_TEST_PASSWORD"],
+}))
+PYLOGIN
+)"
+
 LOGIN="$(
   curl -fsS \
     -X POST "$BASE_URL/auth/login" \
     -H "Content-Type: application/json" \
-    -d "{
-      \"phone\":\"+254700000002\",
-      \"password\":\"Demo123!\"
-    }"
+    -d "$LOGIN_PAYLOAD"
 )"
 
 RETAILER_TOKEN="$(
