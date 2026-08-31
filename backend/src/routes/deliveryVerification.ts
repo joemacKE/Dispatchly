@@ -425,22 +425,33 @@ export default async function deliveryVerificationRoutes(
             `
             UPDATE delivery_requests
 
-            SET
+          SET
 
-              status =
-              'delivered',
+          status =
+          'delivered',
 
-              delivery_qr_used_at =
-              NOW(),
+          delivery_qr_used_at =
+          NOW(),
 
-              delivery_qr_token =
-              NULL,
+          delivery_qr_token =
+          NULL,
 
-              version =
-              version + 1,
+          payment_status =
+          CASE
+            WHEN payment_method = 'cash_on_delivery'
+            THEN 'paid'
+            ELSE payment_status
+          END,
 
-              updated_at =
-              NOW()
+          version =
+          version + 1,
+
+          updated_at =
+          NOW()
+
+          WHERE id=$1
+
+          RETURNING *
 
 
             WHERE id=$1
