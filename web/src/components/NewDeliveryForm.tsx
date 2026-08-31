@@ -5,6 +5,8 @@ type DeliveryForm = {
   customer_phone: string;
   customer_address: string;
   item_description: string;
+  payment_method: "prepaid" | "cash_on_delivery";
+  payment_amount?: number;
 };
 
 const initialForm: DeliveryForm = {
@@ -12,6 +14,8 @@ const initialForm: DeliveryForm = {
   customer_phone: "",
   customer_address: "",
   item_description: "",
+  payment_method: "prepaid",
+  payment_amount: undefined,
 };
 
 type Props = {
@@ -25,7 +29,7 @@ export default function NewDeliveryForm({ onSubmit }: Props) {
 
   const [error, setError] = useState("");
 
-  function update(field: keyof DeliveryForm, value: string) {
+  function update(field: keyof DeliveryForm, value: string | number) {
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -39,7 +43,16 @@ export default function NewDeliveryForm({ onSubmit }: Props) {
     setError("");
 
     try {
-      await onSubmit(form);
+      if (form.payment_method === "cash_on_delivery" && !form.payment_amount) {
+        throw new Error("Payment amount is required for cash on delivery");
+      }
+
+      await onSubmit({
+        ...form,
+
+        payment_amount:
+          form.payment_method === "prepaid" ? undefined : form.payment_amount,
+      });
 
       setForm({
         ...initialForm,
@@ -90,6 +103,39 @@ export default function NewDeliveryForm({ onSubmit }: Props) {
           onChange={(event) => update("item_description", event.target.value)}
           required
         />
+
+        <select
+          value={form.payment_method}
+          onChange={(event) =>
+            update(
+              "payment_method",
+              event.target.value as "prepaid" | "cash_on_delivery",
+            )
+          }
+        >
+          <option value="prepaid">Prepaid</option>
+
+          <option value="cash_on_delivery">Cash on delivery</option>
+        </select>
+
+        {form.payment_method === "cash_on_delivery" && (
+          <input
+            type="number"
+            placeholder="Payment amount"
+            min="1"
+            value={form.payment_amount ?? ""}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+
+                payment_amount: event.target.value
+                  ? Number(event.target.value)
+                  : undefined,
+              }))
+            }
+            required
+          />
+        )}
 
         {error && <div className="error-box">{error}</div>}
 
