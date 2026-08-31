@@ -19,6 +19,15 @@ import NewDeliveryForm from "../components/NewDeliveryForm";
 
 import type { Delivery, Rider } from "../types";
 
+type DeliveryForm = {
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  item_description: string;
+  payment_method: "prepaid" | "cash_on_delivery";
+  payment_amount?: number;
+};
+
 export default function DashboardPage() {
   const { token, user, logout } = useAuth();
 
@@ -127,6 +136,7 @@ export default function DashboardPage() {
         (delivery) => delivery.status === "delivered",
       ).length,
     }),
+
     [deliveries],
   );
 
@@ -138,12 +148,7 @@ export default function DashboardPage() {
     return <Navigate to="/rider" replace />;
   }
 
-  async function addDelivery(data: {
-    customer_name: string;
-    customer_phone: string;
-    customer_address: string;
-    item_description: string;
-  }) {
+  async function addDelivery(data: DeliveryForm) {
     if (!token) {
       return;
     }
@@ -181,28 +186,16 @@ export default function DashboardPage() {
     return getDeliveryQr(token, deliveryId);
   }
 
-  async function getPickupVerificationQr(
-    deliveryId: string
-  ) {
-    if (!token) {
-      throw new Error(
-        "Authentication required"
-      );
+  async function getPickupVerificationQr(deliveryId: string) {
+    if (!token || !user) {
+      throw new Error("Authentication required");
     }
 
-    if (
-      user?.role !==
-      "retailer"
-    ) {
-      throw new Error(
-        "Only the retailer can display the pickup QR code"
-      );
+    if (user.role !== "retailer") {
+      throw new Error("Only the retailer can display the pickup QR code");
     }
 
-    return getPickupQr(
-      token,
-      deliveryId
-    );
+    return getPickupQr(token, deliveryId);
   }
 
   return (

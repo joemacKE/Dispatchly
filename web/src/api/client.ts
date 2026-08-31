@@ -159,6 +159,10 @@ export async function createDelivery(
     customer_phone: string;
     customer_address: string;
     item_description: string;
+    payment_method:
+      | "prepaid"
+      | "cash_on_delivery";
+    payment_amount?: number;
   }
 ) {
   const response =
@@ -176,11 +180,10 @@ export async function createDelivery(
         },
 
         body:
-          JSON.stringify(
-            payload
-          ),
+          JSON.stringify(payload),
       }
     );
+
 
   return parseResponse<{
     success: boolean;
