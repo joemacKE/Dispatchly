@@ -127,7 +127,38 @@ export async function login(
   );
 }
 
+export async function getDashboardOrders(
+ token:string,
+ status?:string
+){
 
+const query =
+status
+?
+`?status=${status}`
+:
+"";
+
+
+const response =
+await fetch(
+`${API_URL}/dashboard/orders${query}`,
+{
+headers:{
+Authorization:
+`Bearer ${token}`,
+},
+}
+);
+
+
+return parseResponse<{
+success:boolean;
+orders:Delivery[];
+}>(response);
+
+
+}
 /*
  * ==========================================================
  * DELIVERY REQUESTS
@@ -605,5 +636,43 @@ export async function submitProofOfDelivery(
 
 
  return parseResponse(response);
+
+}
+
+/*
+ * ==========================================================
+ * DASHBOARD STATISTICS
+ * ==========================================================
+ */
+
+export async function getDashboardStats(
+  token: string
+) {
+
+  const response =
+    await fetch(
+      `${API_URL}/dashboard/stats`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+
+  return parseResponse<{
+    success: boolean;
+
+    stats: {
+      total: number;
+      pending: number;
+      active: number;
+      picked_up: number;
+      delivered: number;
+      failed: number;
+    };
+
+  }>(response);
 
 }
