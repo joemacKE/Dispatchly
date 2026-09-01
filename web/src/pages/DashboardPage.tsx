@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Navigate } from "react-router-dom";
 
@@ -10,12 +10,14 @@ import {
   getDeliveryQr,
   getPickupQr,
   getRiders,
+  getDashboardStats,
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
 
 import DeliveryCard from "../components/DeliveryCard";
 import NewDeliveryForm from "../components/NewDeliveryForm";
+import OrderStatsCards from "../components/dashboard/OrderStatsCards";
 
 import type { Delivery, Rider } from "../types";
 
@@ -32,6 +34,16 @@ export default function DashboardPage() {
   const { token, user, logout } = useAuth();
 
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    total: 0,
+    pending: 0,
+    active: 0,
+    picked_up: 0,
+    delivered: 0,
+    failed: 0,
+  });
+
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   const [riders, setRiders] = useState<Rider[]>([]);
 
@@ -67,9 +79,30 @@ export default function DashboardPage() {
     }
   }, [token, user]);
 
+  // NEW FUNCTION STARTS HERE
+  const loadDashboardStats = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const result = await getDashboardStats(token);
+
+      setDashboardStats(result.stats);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load dashboard statistics",
+      );
+    }
+  }, [token]);
+
   useEffect(() => {
     void loadData();
-  }, [loadData]);
+
+    void loadDashboardStats();
+  }, [loadData, loadDashboardStats]);
 
   useEffect(() => {
     if (!token) {
@@ -120,25 +153,6 @@ export default function DashboardPage() {
       socket.close();
     };
   }, [token, loadData]);
-
-  const counts = useMemo(
-    () => ({
-      total: deliveries.length,
-
-      pending: deliveries.filter((delivery) => delivery.status === "pending")
-        .length,
-
-      active: deliveries.filter((delivery) =>
-        ["assigned", "picked_up", "in_transit"].includes(delivery.status),
-      ).length,
-
-      delivered: deliveries.filter(
-        (delivery) => delivery.status === "delivered",
-      ).length,
-    }),
-
-    [deliveries],
-  );
 
   if (!token || !user) {
     return <Navigate to="/login" replace />;
@@ -239,27 +253,11 @@ export default function DashboardPage() {
           </p>
         </header>
 
-        <section className="stats">
-          <article>
-            <span>Total</span>
-            <strong>{counts.total}</strong>
-          </article>
-
-          <article>
-            <span>Pending</span>
-            <strong>{counts.pending}</strong>
-          </article>
-
-          <article>
-            <span>Active</span>
-            <strong>{counts.active}</strong>
-          </article>
-
-          <article>
-            <span>Delivered</span>
-            <strong>{counts.delivered}</strong>
-          </article>
-        </section>
+        <OrderStatsCards
+          stats={dashboardStats}
+          selected={selectedStatus}
+          onSelect={setSelectedStatus}
+        />
 
         {error && <div className="error-box">{error}</div>}
 
