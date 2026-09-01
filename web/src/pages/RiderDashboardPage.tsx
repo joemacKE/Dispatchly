@@ -236,11 +236,7 @@ export default function RiderDashboardPage() {
     }
   }
 
-  async function completeDelivery(
-    delivery: Delivery,
-    qrToken: string,
-    recipient: string,
-  ) {
+  async function completeDelivery(delivery: Delivery, qrToken: string) {
     if (!token) {
       throw new Error("Authentication required");
     }
