@@ -71,14 +71,21 @@ export default function RiderDeliveryCard({
     }
   }
 
-  const handleScan = useCallback(
+ const handleScan =
+  useCallback(
     (value: string) => {
-      console.log("SCANNED QR VALUE:", value);
+
+      console.log(
+        "SCANNED QR VALUE:",
+        value
+      );
+
       setShowScanner(false);
 
-      if (scanMode === "pickup") {
+      if (
+        scanMode === "pickup"
+      ) {
         void verifyPickupQr(value);
-
         return;
       }
 
@@ -88,9 +95,6 @@ export default function RiderDeliveryCard({
 
       setError("");
     },
-    [scanMode, delivery, online, onVerifyPickup],
-  );
-
   async function complete() {
     setError("");
 
