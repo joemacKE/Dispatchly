@@ -448,16 +448,9 @@ export default async function deliveryVerificationRoutes(
 
           updated_at =
           NOW()
-
           WHERE id=$1
 
           RETURNING *
-
-
-            WHERE id=$1
-
-
-            RETURNING *
 
             `,
             [

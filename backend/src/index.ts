@@ -7,7 +7,6 @@ import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 
-
 import { db } from "./config/db";
 
 import {
@@ -258,21 +257,14 @@ await app.register(
           statusCode === 429
         ) {
           return reply
-            .status(429)
-            .send({
-              success: false,
-
-              error: {
-                code:
-                  "RATE_LIMITED",
-
-                message:
-                  "Too many requests. Please try again later.",
-              },
-
-              request_id:
-                request.id,
-            });
+.status(500)
+.send({
+  success:false,
+  error:{
+    code:"INTERNAL_SERVER_ERROR",
+    message: apiError.message,
+  },
+});
         }
 
         /*
