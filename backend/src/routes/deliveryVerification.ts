@@ -321,8 +321,10 @@ export default async function deliveryVerificationRoutes(
 
 
       const scannedToken =
-        body.scanned_delivery_qr_token
-          ?.trim();
+  body.scanned_delivery_qr_token
+    ?.trim()
+    .replace(/[\r\n\t]/g,"")
+    .replace(/\s+/g,"");
 
 
 
@@ -437,9 +439,10 @@ export default async function deliveryVerificationRoutes(
 
 
 
-        if (
-          record.delivery_qr_token !== scannedToken
-        ) {
+       if (
+  !record.delivery_qr_token ||
+  record.delivery_qr_token !== scannedToken
+){
 
 
           await client.query(
@@ -478,7 +481,6 @@ export default async function deliveryVerificationRoutes(
 
               delivery_qr_used_at=NOW(),
 
-              delivery_qr_token=NULL,
 
               payment_status =
               CASE
