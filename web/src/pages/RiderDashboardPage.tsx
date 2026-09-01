@@ -1,24 +1,15 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  Navigate,
-} from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import {
   getMyDeliveries,
-  submitProofOfDelivery,
   syncOfflineEvents,
   verifyPickup,
+  verifyDelivery,
 } from "../api/client";
 
-import {
-  useAuth,
-} from "../auth/AuthContext";
+import { useAuth } from "../auth/AuthContext";
 
 import RiderDeliveryCard from "../components/RiderDeliveryCard";
 
@@ -28,124 +19,76 @@ import {
   saveOfflineQueue,
 } from "../rider/offlineQueue";
 
-import type {
-  Delivery,
-} from "../types";
+import type { Delivery } from "../types";
 
 function getLocation(): Promise<{
   lat?: number;
   lng?: number;
 }> {
-  return new Promise(
-    (resolve) => {
-      if (
-        !navigator.geolocation
-      ) {
-        resolve({});
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({});
 
-        return;
-      }
-
-      navigator.geolocation
-        .getCurrentPosition(
-          (position) => {
-            resolve({
-              lat:
-                position.coords
-                  .latitude,
-
-              lng:
-                position.coords
-                  .longitude,
-            });
-          },
-
-          () => {
-            resolve({});
-          },
-
-          {
-            timeout: 5000,
-            maximumAge: 60000,
-          }
-        );
+      return;
     }
-  );
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+
+          lng: position.coords.longitude,
+        });
+      },
+
+      () => {
+        resolve({});
+      },
+
+      {
+        timeout: 5000,
+        maximumAge: 60000,
+      },
+    );
+  });
 }
 
 export default function RiderDashboardPage() {
-  const {
-    token,
-    user,
-    logout,
-  } = useAuth();
+  const { token, user, logout } = useAuth();
 
-  const riderId =
-    user?.id || "unknown";
+  const riderId = user?.id || "unknown";
 
-  const [
-    deliveries,
-    setDeliveries,
-  ] =
-    useState<Delivery[]>(
-      []
-    );
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [
-    busyId,
-    setBusyId,
-  ] =
-    useState<string | null>(
-      null
-    );
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [online, setOnline] =
-    useState(
-      navigator.onLine
-    );
+  const [online, setOnline] = useState(navigator.onLine);
 
-  const [
-    queueCount,
-    setQueueCount,
-  ] = useState(
-    getOfflineQueue(
-      riderId
-    ).length
-  );
+  const [queueCount, setQueueCount] = useState(getOfflineQueue(riderId).length);
 
-  const loadDeliveries =
-    useCallback(async () => {
-      if (!token) {
-        return;
-      }
+  const loadDeliveries = useCallback(async () => {
+    if (!token) {
+      return;
+    }
 
-      try {
-        const result =
-          await getMyDeliveries(
-            token
-          );
+    try {
+      const result = await getMyDeliveries(token);
 
-        setDeliveries(
-          result.deliveries
-        );
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load rider deliveries"
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [token]);
+      setDeliveries(result.deliveries);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load rider deliveries",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   /*
    * This remains only so riders can
@@ -155,87 +98,53 @@ export default function RiderDashboardPage() {
    * The new pickup workflow never
    * creates offline custody events.
    */
-  const flushQueue =
-    useCallback(async () => {
-      if (
-        !token ||
-        !navigator.onLine
-      ) {
-        return;
-      }
+  const flushQueue = useCallback(async () => {
+    if (!token || !navigator.onLine) {
+      return;
+    }
 
-      const queue =
-        getOfflineQueue(
-          riderId
-        );
+    const queue = getOfflineQueue(riderId);
 
-      if (!queue.length) {
-        setQueueCount(0);
+    if (!queue.length) {
+      setQueueCount(0);
 
-        return;
-      }
+      return;
+    }
 
-      try {
-        const result =
-          await syncOfflineEvents(
-            token,
-            queue
-          );
+    try {
+      const result = await syncOfflineEvents(token, queue);
 
-        const finished =
-          new Set(
-            result.results
-              .filter(
-                (item) =>
-                  item.result ===
-                    "applied" ||
-                  item.result ===
-                    "duplicate"
-              )
-              .map(
-                (item) =>
-                  item.client_event_id
-              )
-          );
+      const finished = new Set(
+        result.results
+          .filter(
+            (item) => item.result === "applied" || item.result === "duplicate",
+          )
+          .map((item) => item.client_event_id),
+      );
 
-        const remaining =
-          queue.filter(
-            (event) =>
-              !finished.has(
-                event.client_event_id
-              )
-          );
+      const remaining = queue.filter(
+        (event) => !finished.has(event.client_event_id),
+      );
 
-        saveOfflineQueue(
-          riderId,
-          remaining
-        );
+      saveOfflineQueue(riderId, remaining);
 
-        setQueueCount(
-          remaining.length
-        );
+      setQueueCount(remaining.length);
 
-        if (
-          remaining.length
-        ) {
-          setError(
-            `${remaining.length} legacy offline event(s) were rejected or conflicted. Pickup verification now requires an online QR scan.`
-          );
-        }
-
-        await loadDeliveries();
-      } catch (error) {
+      if (remaining.length) {
         setError(
-          error instanceof Error
-            ? error.message
-            : "Offline synchronization failed"
+          `${remaining.length} legacy offline event(s) were rejected or conflicted. Pickup verification now requires an online QR scan.`,
         );
       }
-    }, [
-      token,
-      riderId,
-      loadDeliveries,
-    ]);
+
+      await loadDeliveries();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Offline synchronization failed",
+      );
+    }
+  }, [token, riderId, loadDeliveries]);
 
   useEffect(() => {
     void loadDeliveries();
@@ -252,26 +161,14 @@ export default function RiderDashboardPage() {
       setOnline(false);
     }
 
-    window.addEventListener(
-      "online",
-      handleOnline
-    );
+    window.addEventListener("online", handleOnline);
 
-    window.addEventListener(
-      "offline",
-      handleOffline
-    );
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener(
-        "online",
-        handleOnline
-      );
+      window.removeEventListener("online", handleOnline);
 
-      window.removeEventListener(
-        "offline",
-        handleOffline
-      );
+      window.removeEventListener("offline", handleOffline);
     };
   }, [flushQueue]);
 
@@ -281,90 +178,53 @@ export default function RiderDashboardPage() {
     }
   }, [flushQueue]);
 
-  const counts =
-    useMemo(
-      () => ({
-        assigned:
-          deliveries.filter(
-            (delivery) =>
-              delivery.status ===
-              "assigned"
-          ).length,
+  const counts = useMemo(
+    () => ({
+      assigned: deliveries.filter((delivery) => delivery.status === "assigned")
+        .length,
 
-        inTransit:
-          deliveries.filter(
-            (delivery) =>
-              delivery.status ===
-              "in_transit"
-          ).length,
+      inTransit: deliveries.filter(
+        (delivery) => delivery.status === "in_transit",
+      ).length,
 
-        active:
-          deliveries.length,
-      }),
-      [deliveries]
-    );
+      active: deliveries.length,
+    }),
+    [deliveries],
+  );
 
   if (!token || !user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+    return <Navigate to="/login" replace />;
   }
 
-  if (
-    user.role !==
-    "rider"
-  ) {
-    return (
-      <Navigate
-        to="/dashboard"
-        replace
-      />
-    );
+  if (user.role !== "rider") {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  async function verifyPickupQr(
-    delivery: Delivery,
-    qrToken: string
-  ) {
+  async function verifyPickupQr(delivery: Delivery, qrToken: string) {
     if (!token) {
-      throw new Error(
-        "Authentication required"
-      );
+      throw new Error("Authentication required");
     }
 
     if (!navigator.onLine) {
-      throw new Error(
-        "Internet access is required to verify pickup."
-      );
+      throw new Error("Internet access is required to verify pickup.");
     }
 
-    const location =
-      await getLocation();
+    const location = await getLocation();
 
     setBusyId(delivery.id);
 
     setError("");
 
     try {
-      await verifyPickup(
-        token,
-        delivery.id,
-        {
-          scanned_pickup_qr_token:
-            qrToken,
+      await verifyPickup(token, delivery.id, {
+        scanned_pickup_qr_token: qrToken,
 
-          version:
-            delivery.version,
+        version: delivery.version,
 
-          client_event_id:
-            crypto.randomUUID(),
+        client_event_id: crypto.randomUUID(),
 
-          ...location,
-        }
-      );
+        ...location,
+      });
 
       await loadDeliveries();
     } catch (error) {
@@ -379,59 +239,58 @@ export default function RiderDashboardPage() {
   async function completeDelivery(
     delivery: Delivery,
     qrToken: string,
-    recipient: string
+    recipient: string,
   ) {
     if (!token) {
-      return;
+      throw new Error("Authentication required");
     }
 
     if (!navigator.onLine) {
       throw new Error(
-        "Internet access is required to verify the delivery QR code."
+        "Internet access is required to verify the delivery QR code.",
       );
+    }
+
+    const cleanedToken = qrToken
+      .trim()
+      .replace(/[\r\n\t]/g, "")
+      .replace(/\s+/g, "");
+
+    if (!cleanedToken) {
+      throw new Error("Delivery QR token is empty.");
     }
 
     setBusyId(delivery.id);
 
+    setError("");
+
     try {
-      await submitProofOfDelivery(
-        token,
-        delivery.id,
-        {
-          scanned_qr_token:
-            qrToken,
+      await verifyDelivery(token, delivery.id, {
+        scanned_delivery_qr_token: cleanedToken,
 
-          version:
-            delivery.version,
-
-          client_event_id:
-            crypto.randomUUID(),
-
-          recipient_name:
-            recipient ||
-            undefined,
-        }
-      );
+        version: delivery.version,
+      });
 
       await loadDeliveries();
+    } catch (error) {
+      await loadDeliveries();
+
+      throw error;
     } finally {
       setBusyId(null);
     }
   }
 
   function discardQueue() {
-    const confirmed =
-      window.confirm(
-        "Discard all legacy unsynchronized rider events?"
-      );
+    const confirmed = window.confirm(
+      "Discard all legacy unsynchronized rider events?",
+    );
 
     if (!confirmed) {
       return;
     }
 
-    clearOfflineQueue(
-      riderId
-    );
+    clearOfflineQueue(riderId);
 
     setQueueCount(0);
 
@@ -442,25 +301,16 @@ export default function RiderDashboardPage() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand-row">
-          <div className="brand-mark small">
-            R
-          </div>
+          <div className="brand-mark small">R</div>
 
           <div>
-            <strong>
-              Reflex Rider
-            </strong>
+            <strong>Reflex Rider</strong>
 
-            <span>
-              {user.name}
-            </span>
+            <span>{user.name}</span>
           </div>
         </div>
 
-        <button
-          className="secondary-button"
-          onClick={logout}
-        >
+        <button className="secondary-button" onClick={logout}>
           Sign out
         </button>
       </header>
@@ -468,32 +318,17 @@ export default function RiderDashboardPage() {
       <main className="rider-page">
         <header className="rider-heading">
           <div>
-            <p className="eyebrow">
-              Rider Operations
-            </p>
+            <p className="eyebrow">Rider Operations</p>
 
-            <h1>
-              My Deliveries
-            </h1>
+            <h1>My Deliveries</h1>
 
             <p className="muted">
-              Verify pickup,
-              transport and complete
-              your assigned jobs.
+              Verify pickup, transport and complete your assigned jobs.
             </p>
           </div>
 
-          <span
-            className={
-              online
-                ? "network online"
-                : "network offline"
-            }
-          >
-            ●{" "}
-            {online
-              ? "Online"
-              : "Offline"}
+          <span className={online ? "network online" : "network offline"}>
+            ● {online ? "Online" : "Offline"}
           </span>
         </header>
 
@@ -501,45 +336,29 @@ export default function RiderDashboardPage() {
           <article>
             <span>Assigned</span>
 
-            <strong>
-              {counts.assigned}
-            </strong>
+            <strong>{counts.assigned}</strong>
           </article>
 
           <article>
-            <span>
-              In Transit
-            </span>
+            <span>In Transit</span>
 
-            <strong>
-              {counts.inTransit}
-            </strong>
+            <strong>{counts.inTransit}</strong>
           </article>
 
           <article>
-            <span>
-              Active Jobs
-            </span>
+            <span>Active Jobs</span>
 
-            <strong>
-              {counts.active}
-            </strong>
+            <strong>{counts.active}</strong>
           </article>
         </section>
 
         {!online && (
           <section className="offline-banner">
             <div>
-              <strong>
-                Pickup verification
-                unavailable offline
-              </strong>
+              <strong>Pickup verification unavailable offline</strong>
 
               <span>
-                Reconnect to the
-                internet before
-                scanning a retailer
-                pickup QR.
+                Reconnect to the internet before scanning a retailer pickup QR.
               </span>
             </div>
           </section>
@@ -549,104 +368,62 @@ export default function RiderDashboardPage() {
           <section className="offline-banner">
             <div>
               <strong>
-                {queueCount} legacy
-                offline event
-                {queueCount === 1
-                  ? ""
-                  : "s"}{" "}
-                waiting
+                {queueCount} legacy offline event
+                {queueCount === 1 ? "" : "s"} waiting
               </strong>
 
-              <span>
-                These were created by
-                an older rider
-                workflow.
-              </span>
+              <span>These were created by an older rider workflow.</span>
             </div>
 
             <div>
               {online && (
                 <button
                   className="primary-button"
-                  onClick={() =>
-                    void flushQueue()
-                  }
+                  onClick={() => void flushQueue()}
                 >
                   Sync now
                 </button>
               )}
 
-              <button
-                className="danger-button"
-                onClick={
-                  discardQueue
-                }
-              >
+              <button className="danger-button" onClick={discardQueue}>
                 Discard
               </button>
             </div>
           </section>
         )}
 
-        {error && (
-          <div className="error-box">
-            {error}
-          </div>
-        )}
+        {error && <div className="error-box">{error}</div>}
 
         <div className="panel-heading rider-toolbar">
           <strong>
-            {deliveries.length} active
-            job
-            {deliveries.length === 1
-              ? ""
-              : "s"}
+            {deliveries.length} active job
+            {deliveries.length === 1 ? "" : "s"}
           </strong>
 
           <button
             className="secondary-button"
-            onClick={() =>
-              void loadDeliveries()
-            }
+            onClick={() => void loadDeliveries()}
           >
             Refresh
           </button>
         </div>
 
         {loading ? (
-          <div className="empty-state">
-            Loading deliveries...
-          </div>
-        ) : deliveries.length ===
-          0 ? (
-          <div className="empty-state">
-            No active deliveries.
-          </div>
+          <div className="empty-state">Loading deliveries...</div>
+        ) : deliveries.length === 0 ? (
+          <div className="empty-state">No active deliveries.</div>
         ) : (
           <div className="delivery-list">
-            {deliveries.map(
-              (delivery) => (
-                <RiderDeliveryCard
-                  key={
-                    delivery.id
-                  }
-                  delivery={
-                    delivery
-                  }
-                  busy={
-                    busyId ===
-                    delivery.id
-                  }
-                  online={online}
-                  onVerifyPickup={
-                    verifyPickupQr
-                  }
-                  onComplete={
-                    completeDelivery
-                  }
-                />
-              )
-            )}
+            {deliveries.map((delivery) => (
+              <RiderDeliveryCard
+                key={delivery.id}
+                delivery={delivery}
+                busy={busyId === delivery.id}
+                online={online}
+                onVerifyPickup={verifyPickupQr}
+                onComplete={completeDelivery}
+              />
+            ))}
           </div>
         )}
       </main>

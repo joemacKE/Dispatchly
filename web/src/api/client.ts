@@ -430,12 +430,12 @@ export async function getDeliveryQr(
 
 
 export async function verifyDelivery(
- token:string,
- deliveryId:string,
- payload:{
-   scanned_delivery_qr_token:string;
-   version:number;
- }
+  token:string,
+  deliveryId:string,
+  payload:{
+    scanned_delivery_qr_token:string;
+    version:number;
+  }
 ){
 
  const response =
