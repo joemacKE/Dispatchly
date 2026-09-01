@@ -18,9 +18,11 @@ import {
 import { env } from "./config/env";
 
 import authRoutes from "./routes/auth";
+import dashboardRoutes from "./routes/dashboard";
 import deliveryRequestsRoutes from "./routes/deliveryRequests";
 import ridersRoutes from "./routes/riders";
 import dispatchRoutes from "./routes/dispatch";
+
 import riderWorkflowRoutes from "./routes/riderWorkflow";
 import proofOfDeliveryRoutes from "./routes/proofOfDelivery";
 import syncRoutes from "./routes/sync";
@@ -395,6 +397,9 @@ await app.register(
     await app.register(
       deliveryRequestsRoutes
     );
+    await app.register(
+  dashboardRoutes
+);
 
     await app.register(
       ridersRoutes
