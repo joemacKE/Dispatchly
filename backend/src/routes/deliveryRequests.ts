@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { createHmac, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 
 import { db } from "../config/db";
@@ -193,35 +193,7 @@ export default async function deliveryRequestsRoutes(
 
 
 
-      const qrSecret =
-        process.env.QR_SECRET;
-
-
-
-      if (!qrSecret) {
-
-        request.log.error(
-          "QR_SECRET is not configured"
-        );
-
-
-        return reply
-          .status(500)
-          .send({
-
-            success:false,
-
-            error:{
-              code:
-                "SERVER_CONFIGURATION_ERROR",
-
-              message:
-                "QR signing is not configured",
-            },
-
-          });
-
-      }
+      
 
 
 
@@ -231,13 +203,7 @@ export default async function deliveryRequestsRoutes(
        * Kept for compatibility.
        */
 
-      const qrToken =
-        createHmac(
-          "sha256",
-          qrSecret
-        )
-        .update(deliveryId)
-        .digest("hex");
+     
 
 
 
@@ -265,65 +231,39 @@ export default async function deliveryRequestsRoutes(
           await client.query(
 
             `
-            INSERT INTO delivery_requests (
+      INSERT INTO delivery_requests (
 
-              id,
+id,
+business_id,
+created_by_user_id,
+customer_name,
+customer_phone,
+customer_address,
+item_description,
+status,
+payment_method,
+payment_status,
+payment_amount,
+version
 
-              business_id,
+)
 
-              created_by_user_id,
+          VALUES (
 
-              customer_name,
+$1,
+$2,
+$3,
+$4,
+$5,
+$6,
+$7,
+'pending',
+$8,
+$9,
+$10,
+1
 
-              customer_phone,
-
-              customer_address,
-
-              item_description,
-
-              status,
-
-              qr_token,
-
-              payment_method,
-
-              payment_status,
-
-              payment_amount,
-
-              version
-
-            )
-
-            VALUES (
-
-              $1,
-
-              $2,
-
-              $3,
-
-              $4,
-
-              $5,
-
-              $6,
-
-              $7,
-
-              'pending',
-
-              $8,
-
-              $9,
-
-              $10,
-
-              $11,
-
-              1
-
-            )
+)
 
 
             RETURNING
@@ -358,31 +298,18 @@ export default async function deliveryRequestsRoutes(
 
             `,
 
-            [
-
-              deliveryId,
-
-              user.business_id,
-
-              user.sub,
-
-              customer_name,
-
-              customer_phone,
-
-              customer_address,
-
-              item_description,
-
-              qrToken,
-
-              payment_method,
-
-              paymentStatus,
-
-              payment_amount ?? null,
-
-            ]
+           [
+ deliveryId,
+ user.business_id,
+ user.sub,
+ customer_name,
+ customer_phone,
+ customer_address,
+ item_description,
+ payment_method,
+ paymentStatus,
+ payment_amount ?? null,
+]
 
           );
 
