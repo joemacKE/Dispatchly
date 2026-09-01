@@ -51,14 +51,8 @@ export default async function deliveryVerificationRoutes(
 
 
   /*
-   * ==========================================================
    * GENERATE DELIVERY QR
-   * ==========================================================
-   *
-   * Retailer generates customer delivery QR
-   *
    */
-
 
   app.get(
     "/delivery-requests/:id/delivery-qr",
@@ -70,11 +64,8 @@ export default async function deliveryVerificationRoutes(
           reply
         ) => {
 
-
           try {
-
             await request.jwtVerify();
-
           } catch {
 
             return reply
@@ -83,15 +74,12 @@ export default async function deliveryVerificationRoutes(
                 success:false,
 
                 error:{
-                  code:
-                    "UNAUTHORIZED",
-
+                  code:"UNAUTHORIZED",
                   message:
                     "A valid access token is required",
                 },
               });
           }
-
 
 
           const user =
@@ -108,13 +96,12 @@ export default async function deliveryVerificationRoutes(
                 success:false,
 
                 error:{
-                  code:
-                    "FORBIDDEN",
-
+                  code:"FORBIDDEN",
                   message:
                     "Only retailers can generate delivery QR codes",
                 },
               });
+
           }
 
         },
@@ -126,7 +113,6 @@ export default async function deliveryVerificationRoutes(
       reply
     ) => {
 
-
       const {
         id,
       } =
@@ -135,50 +121,27 @@ export default async function deliveryVerificationRoutes(
         };
 
 
+      /*
+       * Only create QR if one does not exist.
+       * Prevents invalidating already issued customer QR codes.
+       */
 
-      const token =
-        generateDeliveryQrToken(
-          id
-        );
-
-
-
-      const result =
+      const existing =
         await db.query(
           `
-          UPDATE delivery_requests
-
-          SET
-
-            delivery_qr_token = $1,
-
-            updated_at = NOW()
-
-
-          WHERE id = $2
-
-
-          RETURNING
-
-            id,
-
-            payment_method,
-
-            payment_status,
-
-            payment_amount
-
+          SELECT
+            delivery_qr_token
+          FROM delivery_requests
+          WHERE id=$1
           `,
           [
-            token,
             id,
           ]
         );
 
 
-
       if (
-        !result.rowCount
+        !existing.rowCount
       ) {
 
         return reply
@@ -187,9 +150,7 @@ export default async function deliveryVerificationRoutes(
             success:false,
 
             error:{
-              code:
-                "DELIVERY_NOT_FOUND",
-
+              code:"DELIVERY_NOT_FOUND",
               message:
                 "Delivery request not found",
             },
@@ -198,13 +159,65 @@ export default async function deliveryVerificationRoutes(
       }
 
 
+      let token =
+        existing.rows[0]
+          .delivery_qr_token;
+
+
+      if (!token) {
+
+        token =
+          generateDeliveryQrToken(
+            id
+          );
+
+
+        await db.query(
+          `
+          UPDATE delivery_requests
+
+          SET
+            delivery_qr_token=$1,
+            updated_at=NOW()
+
+          WHERE id=$2
+
+          `,
+          [
+            token,
+            id,
+          ]
+        );
+
+      }
+
+
+
+      const result =
+        await db.query(
+          `
+          SELECT
+            payment_method,
+            payment_status,
+            payment_amount
+
+          FROM delivery_requests
+
+          WHERE id=$1
+
+          `,
+          [
+            id,
+          ]
+        );
+
+
 
       return reply.send({
 
         success:true,
 
-        delivery_id:
-          id,
+        delivery_id:id,
 
         delivery_qr_token:
           token,
@@ -229,15 +242,11 @@ export default async function deliveryVerificationRoutes(
 
 
 
-  /*
-   * ==========================================================
-   * VERIFY DELIVERY QR
-   * ==========================================================
-   *
-   * Rider scans customer QR
-   *
-   */
 
+
+  /*
+   * VERIFY DELIVERY QR
+   */
 
   app.post(
     "/delivery-requests/:id/delivery",
@@ -260,20 +269,18 @@ export default async function deliveryVerificationRoutes(
             success:false,
 
             error:{
-              code:
-                "UNAUTHORIZED",
-
+              code:"UNAUTHORIZED",
               message:
                 "A valid access token is required",
             },
           });
+
       }
 
 
 
       const user =
         request.user as AuthUser;
-
 
 
       if (
@@ -286,9 +293,7 @@ export default async function deliveryVerificationRoutes(
             success:false,
 
             error:{
-              code:
-                "FORBIDDEN",
-
+              code:"FORBIDDEN",
               message:
                 "Only riders can complete deliveries",
             },
@@ -309,9 +314,35 @@ export default async function deliveryVerificationRoutes(
 
       const body =
         request.body as {
-          scanned_delivery_qr_token:string;
-          version:number;
+          scanned_delivery_qr_token?: string;
+          version?: number;
         };
+
+
+
+      const scannedToken =
+        body.scanned_delivery_qr_token
+          ?.trim();
+
+
+
+      if (!scannedToken) {
+
+        return reply
+          .status(422)
+          .send({
+            success:false,
+
+            error:{
+              code:
+                "INVALID_QR_PAYLOAD",
+
+              message:
+                "Scanned delivery QR token is required",
+            },
+          });
+
+      }
 
 
 
@@ -331,16 +362,13 @@ export default async function deliveryVerificationRoutes(
         const delivery =
           await client.query(
             `
-            SELECT
-
-              *
+            SELECT *
 
             FROM delivery_requests
 
             WHERE id=$1
 
             FOR UPDATE
-
             `,
             [
               id,
@@ -353,9 +381,24 @@ export default async function deliveryVerificationRoutes(
           !delivery.rowCount
         ) {
 
-          throw new Error(
-            "NOT_FOUND"
+          await client.query(
+            "ROLLBACK"
           );
+
+
+          return reply
+            .status(404)
+            .send({
+              success:false,
+
+              error:{
+                code:
+                  "DELIVERY_NOT_FOUND",
+
+                message:
+                  "Delivery request not found",
+              },
+            });
 
         }
 
@@ -369,6 +412,11 @@ export default async function deliveryVerificationRoutes(
         if (
           record.delivery_qr_used_at
         ) {
+
+          await client.query(
+            "ROLLBACK"
+          );
+
 
           return reply
             .status(409)
@@ -388,18 +436,15 @@ export default async function deliveryVerificationRoutes(
 
 
 
-        const expected =
-          generateDeliveryQrToken(
-            id
-          );
-
-
 
         if (
-          !record.delivery_qr_token ||
-          expected !==
-          body.scanned_delivery_qr_token
+          record.delivery_qr_token !== scannedToken
         ) {
+
+
+          await client.query(
+            "ROLLBACK"
+          );
 
 
           return reply
@@ -412,11 +457,13 @@ export default async function deliveryVerificationRoutes(
                   "INVALID_DELIVERY_QR",
 
                 message:
-                  "Delivery QR is invalid for this order",
+                  "The scanned QR code does not match this delivery",
               },
             });
 
         }
+
+
 
 
 
@@ -425,32 +472,30 @@ export default async function deliveryVerificationRoutes(
             `
             UPDATE delivery_requests
 
-          SET
+            SET
 
-          status =
-          'delivered',
+              status='delivered',
 
-          delivery_qr_used_at =
-          NOW(),
+              delivery_qr_used_at=NOW(),
 
-          delivery_qr_token =
-          NULL,
+              delivery_qr_token=NULL,
 
-          payment_status =
-          CASE
-            WHEN payment_method = 'cash_on_delivery'
-            THEN 'paid'
-            ELSE payment_status
-          END,
+              payment_status =
+              CASE
+                WHEN payment_method='cash_on_delivery'
+                THEN 'paid'
+                ELSE payment_status
+              END,
 
-          version =
-          version + 1,
+              version=version+1,
 
-          updated_at =
-          NOW()
-          WHERE id=$1
+              updated_at=NOW()
 
-          RETURNING *
+
+            WHERE id=$1
+
+
+            RETURNING *
 
             `,
             [
@@ -478,11 +523,17 @@ export default async function deliveryVerificationRoutes(
         });
 
 
+
       } catch(error) {
 
 
         await client.query(
           "ROLLBACK"
+        );
+
+
+        request.log.error(
+          error
         );
 
 
@@ -501,11 +552,13 @@ export default async function deliveryVerificationRoutes(
           });
 
 
+
       } finally {
 
         client.release();
 
       }
+
 
     }
 
