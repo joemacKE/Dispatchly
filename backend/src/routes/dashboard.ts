@@ -61,6 +61,7 @@ export default async function dashboardRoutes(
 
       const user =
         request.user as AuthUser;
+        console.log("DASHBOARD USER:", user);
 
 
 
@@ -220,11 +221,31 @@ export default async function dashboardRoutes(
 
 
       const {
-        status,
-      } =
-      request.query as {
-        status?:string;
-      };
+  status,
+} = request.query as {
+  status?: string;
+};
+
+
+let statusFilter: string[] | null = null;
+
+
+if (status === "active") {
+
+  statusFilter = [
+    "assigned",
+    "picked_up",
+    "in_transit",
+  ];
+
+}
+else if (status) {
+
+  statusFilter = [
+    status,
+  ];
+
+}
 
 
 
@@ -262,20 +283,32 @@ export default async function dashboardRoutes(
           WHERE business_id=$1
 
 
-          AND (
-            $2::text IS NULL
-            OR status=$2
-          )
+   AND (
+  $2::text IS NULL
+
+  OR (
+    $2::text = 'active'
+    AND status IN (
+      'assigned'::delivery_status,
+      'picked_up'::delivery_status,
+      'in_transit'::delivery_status
+    )
+  )
+
+  OR (
+    status::text = $2::text
+  )
+)
 
 
           ORDER BY created_at DESC
 
           `,
           [
-            user.business_id,
+ user.business_id,
 
-            status || null,
-          ]
+ statusFilter,
+]
         );
 
 

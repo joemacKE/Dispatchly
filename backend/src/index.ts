@@ -397,7 +397,7 @@ await app.register(
     await app.register(
       deliveryRequestsRoutes
     );
-    await app.register(
+  await app.register(
   dashboardRoutes
 );
 

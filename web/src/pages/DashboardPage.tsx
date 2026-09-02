@@ -4,22 +4,17 @@ import { Navigate } from "react-router-dom";
 
 import {
   API_URL,
-  assignDelivery,
   createDelivery,
-  getDeliveries,
-  getDeliveryQr,
-  getPickupQr,
-  getRiders,
   getDashboardStats,
+  getDashboardOrders,
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
 
-import DeliveryCard from "../components/DeliveryCard";
 import NewDeliveryForm from "../components/NewDeliveryForm";
 import OrderStatsCards from "../components/dashboard/OrderStatsCards";
 
-import type { Delivery, Rider } from "../types";
+import type { Delivery } from "../types";
 
 type DeliveryForm = {
   customer_name: string;
@@ -33,7 +28,7 @@ type DeliveryForm = {
 export default function DashboardPage() {
   const { token, user, logout } = useAuth();
 
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [orders, setOrders] = useState<Delivery[]>([]);
   const [dashboardStats, setDashboardStats] = useState({
     total: 0,
     pending: 0,
@@ -45,39 +40,30 @@ export default function DashboardPage() {
 
   const [selectedStatus, setSelectedStatus] = useState("");
 
-  const [riders, setRiders] = useState<Rider[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   const [live, setLive] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!token || !user) {
+  const loadOrders = useCallback(async () => {
+    if (!token) {
       return;
     }
 
     try {
       setError("");
 
-      const result = await getDeliveries(token);
+      const result = await getDashboardOrders(
+        token,
+        selectedStatus || undefined,
+      );
 
-      setDeliveries(result.deliveries);
-
-      if (user.role === "dispatcher") {
-        const riderResult = await getRiders(token);
-
-        setRiders(riderResult.riders);
-      }
+      setOrders(result.orders);
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Unable to load dashboard",
+        error instanceof Error ? error.message : "Unable to load orders",
       );
-    } finally {
-      setLoading(false);
     }
-  }, [token, user]);
+  }, [token, selectedStatus]);
 
   // NEW FUNCTION STARTS HERE
   const loadDashboardStats = useCallback(async () => {
@@ -99,10 +85,10 @@ export default function DashboardPage() {
   }, [token]);
 
   useEffect(() => {
-    void loadData();
+    void loadOrders();
 
     void loadDashboardStats();
-  }, [loadData, loadDashboardStats]);
+  }, [loadOrders, loadDashboardStats]);
 
   useEffect(() => {
     if (!token) {
@@ -134,7 +120,8 @@ export default function DashboardPage() {
         }
 
         if (message.type?.startsWith("delivery.")) {
-          void loadData();
+          void loadOrders();
+          void loadDashboardStats();
         }
       } catch {
         console.error("Invalid WebSocket message");
@@ -152,7 +139,7 @@ export default function DashboardPage() {
     return () => {
       socket.close();
     };
-  }, [token, loadData]);
+  }, [token, loadOrders, loadDashboardStats]);
 
   if (!token || !user) {
     return <Navigate to="/login" replace />;
@@ -169,47 +156,8 @@ export default function DashboardPage() {
 
     await createDelivery(token, data);
 
-    await loadData();
-  }
-
-  async function assign(delivery: Delivery, riderId: string) {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setError("");
-
-      await assignDelivery(token, delivery.id, riderId, delivery.version);
-
-      await loadData();
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Unable to assign rider",
-      );
-
-      await loadData();
-    }
-  }
-
-  async function getQr(deliveryId: string) {
-    if (!token) {
-      throw new Error("Authentication required");
-    }
-
-    return getDeliveryQr(token, deliveryId);
-  }
-
-  async function getPickupVerificationQr(deliveryId: string) {
-    if (!token || !user) {
-      throw new Error("Authentication required");
-    }
-
-    if (user.role !== "retailer") {
-      throw new Error("Only the retailer can display the pickup QR code");
-    }
-
-    return getPickupQr(token, deliveryId);
+    await loadOrders();
+    await loadDashboardStats();
   }
 
   return (
@@ -271,41 +219,65 @@ export default function DashboardPage() {
           {user.role === "retailer" && (
             <NewDeliveryForm onSubmit={addDelivery} />
           )}
-
           <div className="panel">
             <div className="panel-heading">
               <div>
-                <h2>Deliveries</h2>
+                <h2>
+                  {selectedStatus
+                    ? selectedStatus
+                        .replace("_", " ")
+                        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+                    : "All Orders"}
+                </h2>
 
-                <p className="muted">{deliveries.length} total</p>
+                <p className="muted">{orders.length} orders</p>
               </div>
 
               <button
                 className="secondary-button"
-                onClick={() => void loadData()}
+                onClick={() => void loadOrders()}
               >
                 Refresh
               </button>
             </div>
 
-            {loading ? (
-              <div className="empty-state">Loading deliveries...</div>
-            ) : deliveries.length === 0 ? (
-              <div className="empty-state">No deliveries yet.</div>
+            {orders.length === 0 ? (
+              <div className="empty-state">No orders found.</div>
             ) : (
-              <div className="delivery-list">
-                {deliveries.map((delivery) => (
-                  <DeliveryCard
-                    key={delivery.id}
-                    delivery={delivery}
-                    riders={riders}
-                    isDispatcher={user.role === "dispatcher"}
-                    isRetailer={user.role === "retailer"}
-                    onAssign={assign}
-                    onGetQr={getQr}
-                    onGetPickupQr={getPickupVerificationQr}
-                  />
-                ))}
+              <div className="orders-table-wrapper">
+                <table className="orders-table">
+                  <thead>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Phone</th>
+                      <th>Package</th>
+                      <th>Status</th>
+                      <th>Payment</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order.id}>
+                        <td>
+                          <strong>{order.customer_name}</strong>
+                        </td>
+
+                        <td>{order.customer_phone}</td>
+
+                        <td>{order.item_description}</td>
+
+                        <td>
+                          <span className={`status-badge ${order.status}`}>
+                            {order.status.replace("_", " ")}
+                          </span>
+                        </td>
+
+                        <td>{order.payment_method?.replaceAll("_", " ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

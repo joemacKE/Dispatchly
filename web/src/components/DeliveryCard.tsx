@@ -1,16 +1,8 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  QRCodeSVG,
-} from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 
-import type {
-  Delivery,
-  Rider,
-} from "../types";
+import type { Delivery, Rider } from "../types";
 
 type Props = {
   delivery: Delivery;
@@ -21,30 +13,17 @@ type Props = {
 
   isRetailer: boolean;
 
-  onAssign: (
-    delivery: Delivery,
-    riderId: string
-  ) => Promise<void>;
+  onAssign: (delivery: Delivery, riderId: string) => Promise<void>;
 
-  onGetQr: (
-    deliveryId: string
-  ) => Promise<string>;
+  onGetQr: (deliveryId: string) => Promise<string>;
 
-  onGetPickupQr: (
-    deliveryId: string
-  ) => Promise<string>;
+  onGetPickupQr: (deliveryId: string) => Promise<string>;
 };
 
-function statusLabel(
-  status: string
-) {
+function statusLabel(status: string) {
   return status
     .replaceAll("_", " ")
-    .replace(
-      /\b\w/g,
-      (value) =>
-        value.toUpperCase()
-    );
+    .replace(/\b\w/g, (value) => value.toUpperCase());
 }
 
 export default function DeliveryCard({
@@ -56,44 +35,22 @@ export default function DeliveryCard({
   onGetQr,
   onGetPickupQr,
 }: Props) {
-  const [
-    deliveryQrToken,
-    setDeliveryQrToken,
-  ] = useState("");
+  const [deliveryQrToken, setDeliveryQrToken] = useState("");
 
-  const [
-    pickupQrToken,
-    setPickupQrToken,
-  ] = useState("");
+  const [pickupQrToken, setPickupQrToken] = useState("");
 
-  const [
-    deliveryQrLoading,
-    setDeliveryQrLoading,
-  ] = useState(false);
+  const [deliveryQrLoading, setDeliveryQrLoading] = useState(false);
 
-  const [
-    pickupQrLoading,
-    setPickupQrLoading,
-  ] = useState(false);
+  const [pickupQrLoading, setPickupQrLoading] = useState(false);
 
-  const [
-    showDeliveryQr,
-    setShowDeliveryQr,
-  ] = useState(false);
+  const [showDeliveryQr, setShowDeliveryQr] = useState(false);
 
-  const [
-    showPickupQr,
-    setShowPickupQr,
-  ] = useState(false);
+  const [showPickupQr, setShowPickupQr] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (
-      delivery.status !==
-      "assigned"
-    ) {
+    if (delivery.status !== "assigned") {
       setShowPickupQr(false);
 
       setPickupQrToken("");
@@ -112,26 +69,19 @@ export default function DeliveryCard({
     setDeliveryQrLoading(true);
 
     try {
-      const token =
-        await onGetQr(
-          delivery.id
-        );
+      const token = await onGetQr(delivery.id);
 
-      setDeliveryQrToken(
-        token
-      );
+      setDeliveryQrToken(token);
 
       setShowDeliveryQr(true);
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to load delivery QR code"
+          : "Unable to load delivery QR code",
       );
     } finally {
-      setDeliveryQrLoading(
-        false
-      );
+      setDeliveryQrLoading(false);
     }
   }
 
@@ -147,10 +97,7 @@ export default function DeliveryCard({
     setPickupQrLoading(true);
 
     try {
-      const token =
-        await onGetPickupQr(
-          delivery.id
-        );
+      const token = await onGetPickupQr(delivery.id);
 
       setPickupQrToken(token);
 
@@ -159,12 +106,10 @@ export default function DeliveryCard({
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to load pickup QR code"
+          : "Unable to load pickup QR code",
       );
     } finally {
-      setPickupQrLoading(
-        false
-      );
+      setPickupQrLoading(false);
     }
   }
 
@@ -172,27 +117,13 @@ export default function DeliveryCard({
     <article className="delivery-card">
       <div className="card-heading">
         <div>
-          <h3>
-            {
-              delivery.customer_name
-            }
-          </h3>
+          <h3>{delivery.customer_name}</h3>
 
-          <span className="muted">
-            {
-              delivery.customer_address
-            }
-          </span>
+          <span className="muted">{delivery.customer_address}</span>
         </div>
 
-        <span
-          className={
-            `status status-${delivery.status}`
-          }
-        >
-          {statusLabel(
-            delivery.status
-          )}
+        <span className={`status status-${delivery.status}`}>
+          {statusLabel(delivery.status)}
         </span>
       </div>
 
@@ -200,174 +131,71 @@ export default function DeliveryCard({
         <div>
           <small>Phone</small>
 
-          <strong>
-            {
-              delivery.customer_phone
-            }
-          </strong>
+          <strong>{delivery.customer_phone}</strong>
         </div>
 
         <div>
           <small>Package</small>
 
-          <strong>
-            {
-              delivery.item_description
-            }
-          </strong>
+          <strong>{delivery.item_description}</strong>
         </div>
 
         <div>
           <small>Version</small>
 
-          <strong>
-            {delivery.version}
-          </strong>
+          <strong>{delivery.version}</strong>
         </div>
 
         <div>
           <small>Rider</small>
 
-          <strong>
-            {delivery.rider_name ||
-              "Not assigned"}
-          </strong>
+          <strong>{delivery.rider_name || "Not assigned"}</strong>
         </div>
       </div>
 
-      {isDispatcher &&
-        delivery.status ===
-          "pending" && (
-          <div className="card-actions">
-            <select
-              defaultValue=""
-              onChange={(
-                event
-              ) => {
-                const riderId =
-                  event.target
-                    .value;
+      {isDispatcher && delivery.status === "pending" && (
+        <div className="card-actions">
+          <select
+            defaultValue=""
+            onChange={(event) => {
+              const riderId = event.target.value;
 
-                if (!riderId) {
-                  return;
-                }
+              if (!riderId) {
+                return;
+              }
 
-                void onAssign(
-                  delivery,
-                  riderId
-                );
-              }}
-            >
-              <option value="">
-                Assign rider...
+              void onAssign(delivery, riderId);
+            }}
+          >
+            <option value="">Assign rider...</option>
+
+            {riders.map((rider) => (
+              <option key={rider.id} value={rider.id}>
+                {rider.name}
+                {" — "}
+                {rider.phone}
               </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-              {riders.map(
-                (rider) => (
-                  <option
-                    key={
-                      rider.id
-                    }
-                    value={
-                      rider.id
-                    }
-                  >
-                    {rider.name}
-                    {" — "}
-                    {rider.phone}
-                  </option>
-                )
-              )}
-            </select>
-          </div>
-        )}
-
-      {isRetailer &&
-        delivery.status ===
-          "assigned" && (
-          <div className="qr-section">
-            {!showPickupQr ? (
-              <button
-                type="button"
-                className="primary-button"
-                disabled={
-                  pickupQrLoading
-                }
-                onClick={() =>
-                  void revealPickupQr()
-                }
-              >
-                {pickupQrLoading
-                  ? "Loading Pickup QR..."
-                  : "Show Pickup QR"}
-              </button>
-            ) : (
-              <div className="customer-qr">
-                <div className="qr-image">
-                  <QRCodeSVG
-                    value={
-                      pickupQrToken
-                    }
-                    size={220}
-                    level="H"
-                    marginSize={2}
-                  />
-                </div>
-
-                <div className="qr-information">
-                  <strong>
-                    Pickup QR
-                  </strong>
-
-                  <span>
-                    Show this code only
-                    to the assigned
-                    rider when handing
-                    over the package.
-                  </span>
-
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() =>
-                      setShowPickupQr(
-                        false
-                      )
-                    }
-                  >
-                    Hide Pickup QR
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-      {delivery.status !==
-        "cancelled" && (
+      {isRetailer && delivery.status === "assigned" && (
         <div className="qr-section">
-          {!showDeliveryQr ? (
+          {!showPickupQr ? (
             <button
               type="button"
-              className="secondary-button"
-              disabled={
-                deliveryQrLoading
-              }
-              onClick={() =>
-                void revealDeliveryQr()
-              }
+              className="primary-button"
+              disabled={pickupQrLoading}
+              onClick={() => void revealPickupQr()}
             >
-              {deliveryQrLoading
-                ? "Loading QR..."
-                : "Show Delivery QR"}
+              {pickupQrLoading ? "Loading Pickup QR..." : "Show Pickup QR"}
             </button>
           ) : (
             <div className="customer-qr">
               <div className="qr-image">
                 <QRCodeSVG
-                  value={
-                    deliveryQrToken
-                  }
+                  value={pickupQrToken}
                   size={220}
                   level="H"
                   marginSize={2}
@@ -375,24 +203,57 @@ export default function DeliveryCard({
               </div>
 
               <div className="qr-information">
-                <strong>
-                  Delivery QR
-                </strong>
+                <strong>Pickup QR</strong>
 
                 <span>
-                  Present this code
-                  when confirming final
-                  delivery.
+                  Show this code only to the assigned rider when handing over
+                  the package.
                 </span>
 
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() =>
-                    setShowDeliveryQr(
-                      false
-                    )
-                  }
+                  onClick={() => setShowPickupQr(false)}
+                >
+                  Hide Pickup QR
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {delivery.status !== "cancelled" && (
+        <div className="qr-section">
+          {!showDeliveryQr ? (
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={deliveryQrLoading}
+              onClick={() => void revealDeliveryQr()}
+            >
+              {deliveryQrLoading ? "Loading QR..." : "Show Delivery QR"}
+            </button>
+          ) : (
+            <div className="customer-qr">
+              <div className="qr-image">
+                <QRCodeSVG
+                  value={deliveryQrToken}
+                  size={220}
+                  level="H"
+                  marginSize={2}
+                />
+              </div>
+
+              <div className="qr-information">
+                <strong>Delivery QR</strong>
+
+                <span>Present this code when confirming final delivery.</span>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setShowDeliveryQr(false)}
                 >
                   Hide Delivery QR
                 </button>
@@ -402,11 +263,7 @@ export default function DeliveryCard({
         </div>
       )}
 
-      {error && (
-        <div className="error-box">
-          {error}
-        </div>
-      )}
+      {error && <div className="error-box">{error}</div>}
     </article>
   );
 }

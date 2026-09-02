@@ -38,6 +38,10 @@ export type Delivery = {
   customer_address: string;
   item_description: string;
 
+  payment_method?: "prepaid" | "cash_on_delivery";
+  payment_status?: string;
+  payment_amount?: number | null;
+
   status: DeliveryStatus;
   version: number;
 

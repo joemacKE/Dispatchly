@@ -21,53 +21,71 @@ export default function OrderStatsCards({ stats, selected, onSelect }: Props) {
       label: "Total Orders",
       value: stats.total,
       status: "",
+      color: "blue",
+      icon: "📦",
     },
 
     {
       label: "Pending",
       value: stats.pending,
       status: "pending",
+      color: "orange",
+      icon: "⏳",
     },
 
     {
       label: "Active",
       value: stats.active,
       status: "active",
+      color: "purple",
+      icon: "🚚",
     },
 
     {
       label: "Picked Up",
       value: stats.picked_up,
       status: "picked_up",
+      color: "green",
+      icon: "✓",
     },
 
     {
       label: "Delivered",
       value: stats.delivered,
       status: "delivered",
+      color: "teal",
+      icon: "🏠",
     },
 
     {
       label: "Failed",
       value: stats.failed,
       status: "failed",
+      color: "red",
+      icon: "!",
     },
   ];
 
   return (
-    <section className="stats">
+    <section className="order-stat-grid">
       {cards.map((card) => (
         <button
           key={card.label}
           type="button"
           className={
-            selected === card.status ? "stat-card selected" : "stat-card"
+            selected === card.status
+              ? `order-stat-card selected ${card.color}`
+              : `order-stat-card ${card.color}`
           }
           onClick={() => onSelect(card.status)}
         >
-          <span>{card.label}</span>
+          <div className="order-stat-icon">{card.icon}</div>
 
-          <strong>{card.value}</strong>
+          <div className="order-stat-content">
+            <strong>{card.value}</strong>
+
+            <span>{card.label}</span>
+          </div>
         </button>
       ))}
     </section>
