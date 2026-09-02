@@ -50,12 +50,9 @@ export default function DashboardPage() {
     }
 
     try {
-      setError("");
+      const result = await getDashboardOrders(token, selectedStatus);
 
-      const result = await getDashboardOrders(
-        token,
-        selectedStatus || undefined,
-      );
+      console.log("DASHBOARD ORDERS RESPONSE:", result);
 
       setOrders(result.orders);
     } catch (error) {
