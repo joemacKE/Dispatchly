@@ -1,8 +1,7 @@
 type Stats = {
   pending: number;
-
-  active: number;
-
+  assigned: number;
+  in_transit: number;
   delivered: number;
 };
 
@@ -14,29 +13,49 @@ type Props = {
   onSelect: (status: string) => void;
 };
 
-export default function OrderStatsCards({ stats, selected, onSelect }: Props) {
+export default function OrderStatsCards({
+  stats,
+
+  selected,
+
+  onSelect,
+}: Props) {
   const cards = [
     {
       label: "Pending",
+
       value: stats.pending,
+
       status: "pending",
     },
 
     {
-      label: "Active",
-      value: stats.active,
-      status: "active",
+      label: "Assigned",
+
+      value: stats.assigned,
+
+      status: "assigned",
+    },
+
+    {
+      label: "In Transit",
+
+      value: stats.in_transit,
+
+      status: "in_transit",
     },
 
     {
       label: "Delivered",
+
       value: stats.delivered,
+
       status: "delivered",
     },
   ];
 
   return (
-    <section className="order-stat-grid">
+    <div className="order-stat-grid">
       {cards.map((card) => (
         <button
           key={card.status}
@@ -52,6 +71,6 @@ export default function OrderStatsCards({ stats, selected, onSelect }: Props) {
           <span>{card.label}</span>
         </button>
       ))}
-    </section>
+    </div>
   );
 }

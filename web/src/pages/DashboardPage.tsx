@@ -33,9 +33,8 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Delivery[]>([]);
   const [dashboardStats, setDashboardStats] = useState({
     pending: 0,
-
-    active: 0,
-
+    assigned: 0,
+    in_transit: 0,
     delivered: 0,
   });
 
@@ -72,7 +71,15 @@ export default function DashboardPage() {
     try {
       const result = await getDashboardStats(token);
 
-      setDashboardStats(result.stats);
+      setDashboardStats({
+        pending: Number(result.stats.pending ?? 0),
+
+        assigned: Number(result.stats.assigned ?? 0),
+
+        in_transit: Number(result.stats.in_transit ?? 0),
+
+        delivered: Number(result.stats.delivered ?? 0),
+      });
     } catch (error) {
       setError(
         error instanceof Error

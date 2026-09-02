@@ -35,7 +35,11 @@ export default function DispatcherDashboardPage() {
 
   const [stats, setStats] = useState({
     pending: 0,
-    active: 0,
+
+    assigned: 0,
+
+    in_transit: 0,
+
     delivered: 0,
   });
 
@@ -66,9 +70,25 @@ export default function DispatcherDashboardPage() {
       return;
     }
 
-    const result = await getDashboardStats(token);
+    try {
+      const result = await getDashboardStats(token);
 
-    setStats(result.stats);
+      setStats({
+        pending: Number(result.stats.pending ?? 0),
+
+        assigned: Number(result.stats.assigned ?? 0),
+
+        in_transit: Number(result.stats.in_transit ?? 0),
+
+        delivered: Number(result.stats.delivered ?? 0),
+      });
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load dashboard statistics",
+      );
+    }
   }, [token]);
 
   const loadRiders = useCallback(async () => {
@@ -76,9 +96,15 @@ export default function DispatcherDashboardPage() {
       return;
     }
 
-    const result = await getRiders(token);
+    try {
+      const result = await getRiders(token);
 
-    setRiders(result.riders);
+      setRiders(result.riders);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Unable to load riders",
+      );
+    }
   }, [token]);
 
   useEffect(() => {
@@ -100,6 +126,7 @@ export default function DispatcherDashboardPage() {
       socket.send(
         JSON.stringify({
           type: "auth",
+
           token,
         }),
       );

@@ -610,36 +610,38 @@ export async function submitProofOfDelivery(
  * DASHBOARD STATISTICS
  * ==========================================================
  */
-
 export async function getDashboardStats(
   token:string
 ){
 
- const response =
- await fetch(
- `${API_URL}/dashboard/stats`,
- {
-  headers:{
-   Authorization:
-   `Bearer ${token}`,
-  },
- }
- );
+  const response =
+    await fetch(
+      `${API_URL}/dashboard/stats`,
+      {
+        headers:{
+          Authorization:
+            `Bearer ${token}`,
+        },
+      },
+    );
 
 
- return parseResponse<{
-  success:boolean;
+  return parseResponse<{
+    success:boolean;
 
-  stats:{
-pending:number;
-active:number;
-delivered:number;
-};
+    stats:{
+      pending:number;
 
- }>(response);
+      assigned:number;
+
+      in_transit:number;
+
+      delivered:number;
+    };
+
+  }>(response);
 
 }
-
 /*
  * ==========================================================
  * DASHBOARD ORDERS

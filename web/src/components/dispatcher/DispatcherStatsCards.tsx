@@ -1,7 +1,8 @@
 type Props = {
   stats: {
     pending: number;
-    active: number;
+    assigned: number;
+    in_transit: number;
     delivered: number;
   };
 
@@ -12,25 +13,41 @@ type Props = {
 
 export default function DispatcherStatsCards({
   stats,
+
   selected,
+
   onSelect,
 }: Props) {
   const cards = [
     {
       label: "Pending",
+
       value: stats.pending,
+
       status: "pending",
     },
 
     {
-      label: "Active",
-      value: stats.active,
-      status: "active",
+      label: "Assigned",
+
+      value: stats.assigned,
+
+      status: "assigned",
+    },
+
+    {
+      label: "In Transit",
+
+      value: stats.in_transit,
+
+      status: "in_transit",
     },
 
     {
       label: "Delivered",
+
       value: stats.delivered,
+
       status: "delivered",
     },
   ];
