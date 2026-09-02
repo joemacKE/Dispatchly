@@ -1,10 +1,9 @@
 type Stats = {
-  total: number;
   pending: number;
+
   active: number;
-  picked_up: number;
+
   delivered: number;
-  failed: number;
 };
 
 type Props = {
@@ -18,51 +17,21 @@ type Props = {
 export default function OrderStatsCards({ stats, selected, onSelect }: Props) {
   const cards = [
     {
-      label: "Total Orders",
-      value: stats.total,
-      status: "",
-      color: "blue",
-      icon: "📦",
-    },
-
-    {
       label: "Pending",
       value: stats.pending,
       status: "pending",
-      color: "orange",
-      icon: "⏳",
     },
 
     {
       label: "Active",
       value: stats.active,
       status: "active",
-      color: "purple",
-      icon: "🚚",
-    },
-
-    {
-      label: "Picked Up",
-      value: stats.picked_up,
-      status: "picked_up",
-      color: "green",
-      icon: "✓",
     },
 
     {
       label: "Delivered",
       value: stats.delivered,
       status: "delivered",
-      color: "teal",
-      icon: "🏠",
-    },
-
-    {
-      label: "Failed",
-      value: stats.failed,
-      status: "failed",
-      color: "red",
-      icon: "!",
     },
   ];
 
@@ -70,22 +39,17 @@ export default function OrderStatsCards({ stats, selected, onSelect }: Props) {
     <section className="order-stat-grid">
       {cards.map((card) => (
         <button
-          key={card.label}
-          type="button"
+          key={card.status}
           className={
             selected === card.status
-              ? `order-stat-card selected ${card.color}`
-              : `order-stat-card ${card.color}`
+              ? "order-stat-card selected"
+              : "order-stat-card"
           }
           onClick={() => onSelect(card.status)}
         >
-          <div className="order-stat-icon">{card.icon}</div>
+          <strong>{card.value}</strong>
 
-          <div className="order-stat-content">
-            <strong>{card.value}</strong>
-
-            <span>{card.label}</span>
-          </div>
+          <span>{card.label}</span>
         </button>
       ))}
     </section>

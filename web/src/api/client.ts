@@ -631,13 +631,10 @@ export async function getDashboardStats(
   success:boolean;
 
   stats:{
-   total:number;
-   pending:number;
-   active:number;
-   picked_up:number;
-   delivered:number;
-   failed:number;
-  };
+pending:number;
+active:number;
+delivered:number;
+};
 
  }>(response);
 

@@ -14,6 +14,8 @@ import { useAuth } from "../auth/AuthContext";
 import NewDeliveryForm from "../components/NewDeliveryForm";
 import OrderStatsCards from "../components/dashboard/OrderStatsCards";
 
+import OrdersTable from "../components/dashboard/OrdersTable";
+
 import type { Delivery } from "../types";
 
 type DeliveryForm = {
@@ -30,12 +32,11 @@ export default function DashboardPage() {
 
   const [orders, setOrders] = useState<Delivery[]>([]);
   const [dashboardStats, setDashboardStats] = useState({
-    total: 0,
     pending: 0,
+
     active: 0,
-    picked_up: 0,
+
     delivered: 0,
-    failed: 0,
   });
 
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -222,8 +223,8 @@ export default function DashboardPage() {
                 <h2>
                   {selectedStatus
                     ? selectedStatus
-                        .replace("_", " ")
-                        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+                        .replaceAll("_", " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())
                     : "All Orders"}
                 </h2>
 
@@ -242,39 +243,7 @@ export default function DashboardPage() {
               <div className="empty-state">No orders found.</div>
             ) : (
               <div className="orders-table-wrapper">
-                <table className="orders-table">
-                  <thead>
-                    <tr>
-                      <th>Customer</th>
-                      <th>Phone</th>
-                      <th>Package</th>
-                      <th>Status</th>
-                      <th>Payment</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr key={order.id}>
-                        <td>
-                          <strong>{order.customer_name}</strong>
-                        </td>
-
-                        <td>{order.customer_phone}</td>
-
-                        <td>{order.item_description}</td>
-
-                        <td>
-                          <span className={`status-badge ${order.status}`}>
-                            {order.status.replace("_", " ")}
-                          </span>
-                        </td>
-
-                        <td>{order.payment_method?.replaceAll("_", " ")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <OrdersTable orders={orders} />
               </div>
             )}
           </div>
