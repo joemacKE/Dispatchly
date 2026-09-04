@@ -58,51 +58,43 @@ export default async function dashboardRoutes(
 
 
       const result =
-        await db.query(
+  await db.query(
+    `
+    SELECT
 
-          `
-          SELECT
-
-
-          COUNT(*) FILTER(
-            WHERE status='pending'
-          )::int AS pending,
+      COUNT(*) FILTER(
+        WHERE status = 'pending'::delivery_status
+      )::int AS pending,
 
 
-
-          COUNT(*) FILTER(
-            WHERE status='assigned'
-          )::int AS assigned,
-
+      COUNT(*) FILTER(
+        WHERE status = 'assigned'::delivery_status
+      )::int AS assigned,
 
 
-          COUNT(*) FILTER(
-            WHERE status IN(
-              'picked_up',
-              'in_transit'
-            )
-          )::int AS in_transit,
+      COUNT(*) FILTER(
+        WHERE status IN(
+          'picked_up'::delivery_status,
+          'in_transit'::delivery_status
+        )
+      )::int AS in_transit,
 
 
-
-          COUNT(*) FILTER(
-            WHERE status='delivered'
-          )::int AS delivered
-
+      COUNT(*) FILTER(
+        WHERE status = 'delivered'::delivery_status
+      )::int AS delivered
 
 
-          FROM delivery_requests
+    FROM delivery_requests
 
 
-          WHERE business_id=$1
+    WHERE business_id=$1
 
-          `,
-
-          [
-            user.business_id,
-          ],
-
-        );
+    `,
+    [
+      user.business_id,
+    ],
+  );
 
 
 
@@ -204,78 +196,57 @@ export default async function dashboardRoutes(
 
 
 
+const result =
+  await db.query(
+    `
+    SELECT
 
-      const result =
-        await db.query(
+      id,
 
-          `
+      customer_name,
 
-          SELECT
+      customer_phone,
 
+      customer_address,
 
-          id,
+      item_description,
 
-          customer_name,
+      status,
 
-          customer_phone,
+      payment_method,
 
-          customer_address,
+      payment_status,
 
-          item_description,
+      payment_amount,
 
-          status,
+      created_at,
 
-          payment_method,
-
-          payment_status,
-
-          payment_amount,
-
-          rider_id,
-
-          rider_name,
-
-          rider_phone,
-
-          created_at,
-
-          updated_at
+      updated_at
 
 
-
-          FROM delivery_requests
-
+    FROM delivery_requests
 
 
-          WHERE business_id=$1
+    WHERE business_id=$1
 
 
+    AND (
 
-          AND (
+      $2::text[] IS NULL
 
-            $2::text[] IS NULL
+      OR status::text = ANY($2::text[])
 
-            OR status::text = ANY($2)
-
-          )
-
+    )
 
 
-          ORDER BY created_at DESC
+    ORDER BY created_at DESC
 
-
-          `,
-
-
-          [
-
-            user.business_id,
-
-            statuses,
-
-          ],
-
-        );
+    `,
+    [
+      user.business_id,
+      statuses,
+    ],
+  );
 
 
 

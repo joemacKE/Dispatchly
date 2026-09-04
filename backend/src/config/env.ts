@@ -79,7 +79,7 @@ const databaseUrl =
 const redisUrl =
   getEnvironmentValue(
     "REDIS_URL",
-    "redis://localhost:6379"
+    "redis://redis:6379"
   );
 
 const apiPublicUrl =
