@@ -75,16 +75,16 @@ async function parseResponse<T>(
 
   if (!response.ok) {
 
-    const apiError =
-      data as ApiErrorResponse;
+  const apiError =
+    data as ApiErrorResponse;
 
 
-    throw new Error(
-      apiError.error?.message ||
-      `Request failed (${response.status})`
-    );
+  throw new Error(
+    apiError.error?.message ||
+    `Request failed (${response.status})`
+  );
 
-  }
+}
 
 
   return data as T;
@@ -610,15 +610,16 @@ export async function submitProofOfDelivery(
  * DASHBOARD STATISTICS
  * ==========================================================
  */
+
 export async function getDashboardStats(
-  token:string
-){
+  token: string,
+) {
 
   const response =
     await fetch(
       `${API_URL}/dashboard/stats`,
       {
-        headers:{
+        headers: {
           Authorization:
             `Bearer ${token}`,
         },
@@ -627,21 +628,19 @@ export async function getDashboardStats(
 
 
   return parseResponse<{
-    success:boolean;
+    success: boolean;
 
-    stats:{
-      pending:number;
-
-      assigned:number;
-
-      in_transit:number;
-
-      delivered:number;
+    stats: {
+      pending: number;
+      assigned: number;
+      in_transit: number;
+      delivered: number;
     };
 
   }>(response);
 
 }
+
 /*
  * ==========================================================
  * DASHBOARD ORDERS

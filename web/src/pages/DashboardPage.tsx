@@ -159,12 +159,22 @@ export default function DashboardPage() {
       return;
     }
 
-    await createDelivery(token, data);
+    try {
+      setError("");
 
-    await loadOrders();
-    await loadDashboardStats();
+      await createDelivery(token, data);
+
+      await loadOrders();
+
+      await loadDashboardStats();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create delivery request",
+      );
+    }
   }
-
   return (
     <div className="app-shell">
       <header className="topbar">
