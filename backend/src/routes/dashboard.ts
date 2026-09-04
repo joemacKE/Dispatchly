@@ -2,200 +2,299 @@ import type {
   FastifyInstance,
 } from "fastify";
 
+
 import {
   db,
 } from "../config/db";
 
 
+
 type AuthUser = {
+
   sub:string;
+
   business_id:string;
+
   role:string;
+
 };
+
+
+
 
 
 export default async function dashboardRoutes(
-  app:FastifyInstance
+  app:FastifyInstance,
 ){
 
 
-app.get(
-"/dashboard/stats",
-async(request,reply)=>{
 
+  /*
+   * ==========================================================
+   * DASHBOARD STATISTICS
+   * ==========================================================
+   */
 
-await request.jwtVerify();
 
+  app.get(
 
-const user =
-request.user as AuthUser;
+    "/dashboard/stats",
 
+    async(
+      request,
+      reply,
+    )=>{
 
-const result =
-await db.query(
-`
-SELECT
 
-COUNT(*)::int AS total,
+      await request.jwtVerify();
 
-COUNT(*) FILTER(
-WHERE status='pending'
-)::int AS pending,
 
 
-COUNT(*) FILTER(
-WHERE status IN(
-'assigned',
-'picked_up',
-'in_transit'
-)
-)::int AS active,
+      const user =
+        request.user as AuthUser;
 
 
-COUNT(*) FILTER(
-WHERE status='delivered'
-)::int AS delivered
 
 
-FROM delivery_requests
 
-WHERE business_id=$1
+      const result =
+        await db.query(
 
-`,
-[
-user.business_id
-]
-);
+          `
+          SELECT
 
 
-return reply.send({
+          COUNT(*) FILTER(
+            WHERE status='pending'
+          )::int AS pending,
 
-success:true,
 
-stats:result.rows[0]
 
-});
+          COUNT(*) FILTER(
+            WHERE status='assigned'
+          )::int AS assigned,
 
 
-}
-);
 
+          COUNT(*) FILTER(
+            WHERE status IN(
+              'picked_up',
+              'in_transit'
+            )
+          )::int AS in_transit,
 
 
 
-app.get(
-"/dashboard/orders",
-async(request,reply)=>{
+          COUNT(*) FILTER(
+            WHERE status='delivered'
+          )::int AS delivered
 
 
-await request.jwtVerify();
 
+          FROM delivery_requests
 
-const user =
-request.user as AuthUser;
 
+          WHERE business_id=$1
 
-const {
-status
-}=request.query as {
-status?:string;
-};
+          `,
 
+          [
+            user.business_id,
+          ],
 
+        );
 
-let queryStatus:any = null;
 
 
 
-if(status==="active"){
 
-queryStatus=[
-"assigned",
-"picked_up",
-"in_transit"
-];
+      return reply.send({
 
-}
+        success:true,
 
-else if(status){
+        stats:result.rows[0],
 
-queryStatus=[
-status
-];
+      });
 
-}
 
+    },
 
+  );
 
 
-const result =
-await db.query(
-`
 
-SELECT
 
-id,
 
-customer_name,
 
-customer_phone,
 
-customer_address,
 
-item_description,
 
-status,
+  /*
+   * ==========================================================
+   * DASHBOARD ORDERS
+   * ==========================================================
+   */
 
-payment_method,
 
-payment_status,
 
-payment_amount,
+  app.get(
 
-created_at
+    "/dashboard/orders",
 
+    async(
+      request,
+      reply,
+    )=>{
 
-FROM delivery_requests
 
+      await request.jwtVerify();
 
-WHERE business_id=$1
 
 
-AND
-(
-$2::text IS NULL
+      const user =
+        request.user as AuthUser;
 
-OR
 
-status::text = ANY($2::text[])
 
-)
 
 
-ORDER BY created_at DESC
+      const {
+        status,
+      } =
+      request.query as {
 
+        status?:string;
 
-`,
-[
-user.business_id,
-queryStatus
-]
-);
+      };
 
 
 
-return reply.send({
 
-success:true,
 
-orders:result.rows
+      let statuses:string[] | null =
+        null;
 
-});
 
 
-}
 
-);
+
+      if(status==="active"){
+
+        statuses=[
+
+          "assigned",
+
+          "picked_up",
+
+          "in_transit",
+
+        ];
+
+      }
+
+
+      else if(status){
+
+        statuses=[status];
+
+      }
+
+
+
+
+
+
+
+      const result =
+        await db.query(
+
+          `
+
+          SELECT
+
+
+          id,
+
+          customer_name,
+
+          customer_phone,
+
+          customer_address,
+
+          item_description,
+
+          status,
+
+          payment_method,
+
+          payment_status,
+
+          payment_amount,
+
+          rider_id,
+
+          rider_name,
+
+          rider_phone,
+
+          created_at,
+
+          updated_at
+
+
+
+          FROM delivery_requests
+
+
+
+          WHERE business_id=$1
+
+
+
+          AND (
+
+            $2::text[] IS NULL
+
+            OR status::text = ANY($2)
+
+          )
+
+
+
+          ORDER BY created_at DESC
+
+
+          `,
+
+
+          [
+
+            user.business_id,
+
+            statuses,
+
+          ],
+
+        );
+
+
+
+
+
+      return reply.send({
+
+        success:true,
+
+        orders:result.rows,
+
+      });
+
+
+
+    },
+
+  );
+
 
 
 }
