@@ -267,11 +267,24 @@ export default function DispatcherDashboardPage() {
         {showAssignModal && selectedDelivery && (
           <div className="modal-overlay">
             <div className="modal">
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedDelivery(null);
+                  setSelectedRiderId("");
+                }}
+                aria-label="Close assignment modal"
+              >
+                ×
+              </button>
+
               <h2>Assign Rider</h2>
 
               <p>
-                Select rider for:
-                <strong> {selectedDelivery.customer_name}</strong>
+                Select rider for:{" "}
+                <strong>{selectedDelivery.customer_name}</strong>
               </p>
 
               {riders.length === 0 ? (
@@ -298,21 +311,7 @@ export default function DispatcherDashboardPage() {
                 disabled={loadingAssignment || !selectedRiderId}
                 onClick={confirmAssignment}
               >
-                Confirm Assignment
-              </button>
-
-              <button
-                className="secondary-button"
-                disabled={loadingAssignment}
-                onClick={() => {
-                  setShowAssignModal(false);
-
-                  setSelectedDelivery(null);
-
-                  setSelectedRiderId("");
-                }}
-              >
-                Cancel
+                {loadingAssignment ? "Assigning..." : "Confirm Assignment"}
               </button>
             </div>
           </div>
