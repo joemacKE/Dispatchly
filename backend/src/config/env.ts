@@ -79,9 +79,10 @@ const databaseUrl =
 const redisUrl =
   getEnvironmentValue(
     "REDIS_URL",
-    "redis://redis:6379"
+    nodeEnvironment === "production"
+      ? "redis://redis:6379"
+      : "redis://localhost:6379"
   );
-
 const apiPublicUrl =
   getEnvironmentValue(
     "API_PUBLIC_URL",

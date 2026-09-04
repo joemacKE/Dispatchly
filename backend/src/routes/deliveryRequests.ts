@@ -187,8 +187,10 @@ export default async function deliveryRequestsRoutes(
       const deliveryId =
         randomUUID();
 
-
       const clientEventId =
+        randomUUID();
+      
+      const qrToken =
         randomUUID();
 
 
@@ -228,90 +230,80 @@ export default async function deliveryRequestsRoutes(
 
 
         const deliveryResult =
-          await client.query(
+  await client.query(
 
-            `
-      INSERT INTO delivery_requests (
+    `
+    INSERT INTO delivery_requests (
 
-id,
-business_id,
-created_by_user_id,
-customer_name,
-customer_phone,
-customer_address,
-item_description,
-status,
-payment_method,
-payment_status,
-payment_amount,
-version
+      id,
+      business_id,
+      created_by_user_id,
+      customer_name,
+      customer_phone,
+      customer_address,
+      item_description,
+      qr_token,
+      status,
+      payment_method,
+      payment_status,
+      payment_amount,
+      version
 
-)
+    )
 
-          VALUES (
+    VALUES (
 
-$1,
-$2,
-$3,
-$4,
-$5,
-$6,
-$7,
-'pending',
-$8,
-$9,
-$10,
-1
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6,
+      $7,
+      $8,
+      'pending'::delivery_status,
+      $9,
+      $10,
+      $11,
+      1
 
-)
+    )
 
+    RETURNING
 
-            RETURNING
+      id,
+      business_id,
+      created_by_user_id,
+      customer_name,
+      customer_phone,
+      customer_address,
+      item_description,
+      qr_token,
+      status,
+      payment_method,
+      payment_status,
+      payment_amount,
+      version,
+      created_at,
+      updated_at
 
-              id,
+    `,
 
-              business_id,
+    [
+      deliveryId,
+      user.business_id,
+      user.sub,
+      customer_name,
+      customer_phone,
+      customer_address,
+      item_description,
+      qrToken,
+      payment_method,
+      paymentStatus,
+      payment_amount ?? null,
+    ]
 
-              created_by_user_id,
-
-              customer_name,
-
-              customer_phone,
-
-              customer_address,
-
-              item_description,
-
-              status,
-
-              payment_method,
-
-              payment_status,
-
-              payment_amount,
-
-              version,
-
-              created_at,
-
-              updated_at
-
-            `,
-
-           [
- deliveryId,
- user.business_id,
- user.sub,
- customer_name,
- customer_phone,
- customer_address,
- item_description,
- payment_method,
- paymentStatus,
- payment_amount ?? null,
-]
-
-          );
+  );
 
 
 
