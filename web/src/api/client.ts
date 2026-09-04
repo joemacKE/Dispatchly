@@ -227,10 +227,12 @@ export async function getRiders(
 
 
 export async function assignDelivery(
+  
   token:string,
   deliveryId:string,
   riderId:string,
   version:number
+  
 ){
 
   const response =
@@ -247,11 +249,10 @@ export async function assignDelivery(
             "application/json",
         },
 
-        body:
-          JSON.stringify({
-            rider_id:riderId,
-            version,
-          }),
+        body: JSON.stringify({
+  rider_id: riderId,
+  version,
+})
       }
     );
 

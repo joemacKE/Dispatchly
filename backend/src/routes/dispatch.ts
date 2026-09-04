@@ -122,7 +122,10 @@ export default async function dispatchRoutes(
             },
           });
       }
-
+      console.log(
+  "ASSIGN BODY RECEIVED:",
+  request.body
+);
       const parsedBody =
         assignSchema.safeParse(
           request.body

@@ -199,29 +199,31 @@ export default async function dashboardRoutes(
 const result =
   await db.query(
     `
-    SELECT
+   SELECT
 
-      id,
+  id,
 
-      customer_name,
+  customer_name,
 
-      customer_phone,
+  customer_phone,
 
-      customer_address,
+  customer_address,
 
-      item_description,
+  item_description,
 
-      status,
+  status,
 
-      payment_method,
+  payment_method,
 
-      payment_status,
+  payment_status,
 
-      payment_amount,
+  payment_amount,
 
-      created_at,
+  version,
 
-      updated_at
+  created_at,
+
+  updated_at
 
 
     FROM delivery_requests

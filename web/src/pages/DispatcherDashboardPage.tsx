@@ -177,13 +177,16 @@ export default function DispatcherDashboardPage() {
 
       setError("");
 
+      console.log("ASSIGN DEBUG", {
+        selectedDelivery,
+        selectedRiderId,
+        version: selectedDelivery?.version,
+      });
+
       await assignDelivery(
         token,
-
         selectedDelivery.id,
-
         selectedRiderId,
-
         selectedDelivery.version,
       );
 
