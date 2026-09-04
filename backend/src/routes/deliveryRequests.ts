@@ -343,7 +343,7 @@ $10,
 
             NULL,
 
-            'pending',
+            'pending'::delivery_status,
 
             'Delivery request created',
 
@@ -404,20 +404,21 @@ $10,
 
 
         return reply
-          .status(500)
-          .send({
+.status(500)
+.send({
 
-            success:false,
+ success:false,
 
-            error:{
-              code:
-                "DELIVERY_CREATION_FAILED",
+ error:{
+   code:"DELIVERY_CREATION_FAILED",
 
-              message:
-                "Unable to create delivery request",
-            },
+   message:
+     error instanceof Error
+       ? error.message
+       : "Unable to create delivery request",
+ }
 
-          });
+});
 
 
       } finally {
