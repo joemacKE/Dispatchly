@@ -29,6 +29,8 @@ export default function DispatcherDashboardPage() {
     null,
   );
 
+  const [selectedRiderId, setSelectedRiderId] = useState("");
+
   const [showAssignModal, setShowAssignModal] = useState(false);
 
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -50,9 +52,7 @@ export default function DispatcherDashboardPage() {
   const [live, setLive] = useState(false);
 
   const loadOrders = useCallback(async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     try {
       const result = await getDashboardOrders(token, selectedStatus);
@@ -66,9 +66,7 @@ export default function DispatcherDashboardPage() {
   }, [token, selectedStatus]);
 
   const loadStats = useCallback(async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     try {
       const result = await getDashboardStats(token);
@@ -84,17 +82,13 @@ export default function DispatcherDashboardPage() {
       });
     } catch (error) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load dashboard statistics",
+        error instanceof Error ? error.message : "Unable to load statistics",
       );
     }
   }, [token]);
 
   const loadRiders = useCallback(async () => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     try {
       const result = await getRiders(token);
@@ -116,9 +110,7 @@ export default function DispatcherDashboardPage() {
   }, [loadOrders, loadStats, loadRiders]);
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const socket = new WebSocket(`${API_URL.replace(/^http/, "ws")}/ws`);
 
@@ -154,9 +146,7 @@ export default function DispatcherDashboardPage() {
       setLive(false);
     };
 
-    return () => {
-      socket.close();
-    };
+    return () => socket.close();
   }, [token, loadOrders, loadStats]);
 
   if (!token || !user) {
@@ -172,11 +162,13 @@ export default function DispatcherDashboardPage() {
 
     setSelectedDelivery(delivery);
 
+    setSelectedRiderId("");
+
     setShowAssignModal(true);
   }
 
-  async function confirmAssignment(riderId: string) {
-    if (!token || !selectedDelivery) {
+  async function confirmAssignment() {
+    if (!token || !selectedDelivery || !selectedRiderId) {
       return;
     }
 
@@ -190,7 +182,7 @@ export default function DispatcherDashboardPage() {
 
         selectedDelivery.id,
 
-        riderId,
+        selectedRiderId,
 
         selectedDelivery.version,
       );
@@ -198,6 +190,8 @@ export default function DispatcherDashboardPage() {
       setShowAssignModal(false);
 
       setSelectedDelivery(null);
+
+      setSelectedRiderId("");
 
       await loadOrders();
 
@@ -276,24 +270,36 @@ export default function DispatcherDashboardPage() {
               <h2>Assign Rider</h2>
 
               <p>
-                Select rider for:{" "}
-                <strong>{selectedDelivery.customer_name}</strong>
+                Select rider for:
+                <strong> {selectedDelivery.customer_name}</strong>
               </p>
 
               {riders.length === 0 ? (
                 <div className="empty-state">No active riders available.</div>
               ) : (
-                riders.map((rider) => (
-                  <button
-                    key={rider.id}
-                    className="primary-button"
-                    disabled={loadingAssignment}
-                    onClick={() => confirmAssignment(rider.id)}
-                  >
-                    {rider.name}
-                  </button>
-                ))
+                <select
+                  className="rider-select"
+                  value={selectedRiderId}
+                  disabled={loadingAssignment}
+                  onChange={(event) => setSelectedRiderId(event.target.value)}
+                >
+                  <option value="">Select rider</option>
+
+                  {riders.map((rider) => (
+                    <option key={rider.id} value={rider.id}>
+                      {rider.name}
+                    </option>
+                  ))}
+                </select>
               )}
+
+              <button
+                className="primary-button"
+                disabled={loadingAssignment || !selectedRiderId}
+                onClick={confirmAssignment}
+              >
+                Confirm Assignment
+              </button>
 
               <button
                 className="secondary-button"
@@ -302,6 +308,8 @@ export default function DispatcherDashboardPage() {
                   setShowAssignModal(false);
 
                   setSelectedDelivery(null);
+
+                  setSelectedRiderId("");
                 }}
               >
                 Cancel

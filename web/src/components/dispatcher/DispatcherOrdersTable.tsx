@@ -2,7 +2,6 @@ import type { Delivery } from "../../types";
 
 type Props = {
   orders: Delivery[];
-
   onAssign: (delivery: Delivery) => void;
 };
 
@@ -24,11 +23,9 @@ function formatDate(value?: string) {
   });
 }
 
-export default function DispatcherOrdersTable({
-  orders,
+export default function DispatcherOrdersTable({ orders, onAssign }: Props) {
+  console.log("DispatcherOrdersTable loaded");
 
-  onAssign,
-}: Props) {
   if (orders.length === 0) {
     return <div className="empty-state">No deliveries found.</div>;
   }
@@ -39,17 +36,11 @@ export default function DispatcherOrdersTable({
         <thead>
           <tr>
             <th>Customer</th>
-
             <th>Phone</th>
-
             <th>Package</th>
-
             <th>Status</th>
-
             <th>Rider</th>
-
             <th>Created</th>
-
             <th>Action</th>
           </tr>
         </thead>
@@ -77,20 +68,18 @@ export default function DispatcherOrdersTable({
 
                   {order.status === "pending" && (
                     <button
+                      type="button"
                       className="status-dropdown-button"
                       onClick={() => onAssign(order)}
-                      title="Assign rider"
                     >
-                      ▾
+                      ▼
                     </button>
                   )}
                 </div>
               </td>
 
               <td>
-                {order.rider_name ? (
-                  order.rider_name
-                ) : (
+                {order.rider_name ?? (
                   <span className="muted">Not assigned</span>
                 )}
               </td>
@@ -98,14 +87,10 @@ export default function DispatcherOrdersTable({
               <td>{formatDate(order.created_at)}</td>
 
               <td>
-                <td>
-                  {order.status !== "pending" && (
-                    <span className="muted">In Progress</span>
-                  )}
-                </td>
-
-                {order.status !== "pending" && (
-                  <span className="muted">In Progress</span>
+                {order.status === "pending" ? (
+                  <span className="muted">Awaiting assignment</span>
+                ) : (
+                  <span className="muted">Active</span>
                 )}
               </td>
             </tr>

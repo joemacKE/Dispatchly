@@ -30,7 +30,16 @@ export default function LoginPage() {
    */
   if (token && user) {
     return (
-      <Navigate replace to={user.role === "rider" ? "/rider" : "/dashboard"} />
+      <Navigate
+        replace
+        to={
+          user.role === "rider"
+            ? "/rider"
+            : user.role === "dispatcher"
+              ? "/dispatcher"
+              : "/dashboard"
+        }
+      />
     );
   }
 
