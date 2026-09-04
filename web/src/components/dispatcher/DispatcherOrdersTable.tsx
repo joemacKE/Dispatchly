@@ -70,9 +70,21 @@ export default function DispatcherOrdersTable({
               <td>{order.item_description}</td>
 
               <td>
-                <span className={`status-badge ${order.status}`}>
-                  {formatStatus(order.status)}
-                </span>
+                <div className="status-action">
+                  <span className={`status-badge ${order.status}`}>
+                    {formatStatus(order.status)}
+                  </span>
+
+                  {order.status === "pending" && (
+                    <button
+                      className="status-dropdown-button"
+                      onClick={() => onAssign(order)}
+                      title="Assign rider"
+                    >
+                      ▾
+                    </button>
+                  )}
+                </div>
               </td>
 
               <td>
@@ -86,14 +98,11 @@ export default function DispatcherOrdersTable({
               <td>{formatDate(order.created_at)}</td>
 
               <td>
-                {order.status === "pending" && (
-                  <button
-                    className="primary-button"
-                    onClick={() => onAssign(order)}
-                  >
-                    Assign Rider
-                  </button>
-                )}
+                <td>
+                  {order.status !== "pending" && (
+                    <span className="muted">In Progress</span>
+                  )}
+                </td>
 
                 {order.status !== "pending" && (
                   <span className="muted">In Progress</span>

@@ -1178,3 +1178,44 @@ h4 {
   color:#b91c1c;
 
 }
+.status-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+.status-dropdown-button {
+
+  width: 24px;
+  height: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #d5dce4;
+  border-radius: 50%;
+
+  background: white;
+  color: #344052;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background .2s ease,
+    transform .2s ease;
+
+}
+
+
+.status-dropdown-button:hover {
+
+  background: #f4f6f8;
+
+  transform: translateY(-1px);
+
+}
