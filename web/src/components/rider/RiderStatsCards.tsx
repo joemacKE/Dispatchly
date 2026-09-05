@@ -6,7 +6,7 @@ import {
   faRoute,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
-
+type StatusFilter = "" | "assigned" | "in_transit" | "delivered";
 type Props = {
   stats: {
     assigned: number;
@@ -17,11 +17,16 @@ type Props = {
 
   selected: string;
 
-  onSelect: (status: string) => void;
+  onSelect: (status: "" | "assigned" | "in_transit" | "delivered") => void;
 };
 
 export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
-  const cards = [
+  const cards: {
+    key: StatusFilter;
+    title: string;
+    value: number;
+    icon: any;
+  }[] = [
     {
       key: "",
       title: "Active Jobs",
@@ -62,11 +67,17 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
           }
           onClick={() => onSelect(card.key)}
         >
-          <FontAwesomeIcon icon={card.icon} className="rider-stat-icon" />
+          <div className="rider-card-icon">
+            <FontAwesomeIcon icon={card.icon} />
+          </div>
 
-          <span>{card.title}</span>
+          <div className="rider-card-content">
+            <span>{card.title}</span>
 
-          <strong>{card.value}</strong>
+            <strong>{card.value}</strong>
+
+            <small>View deliveries</small>
+          </div>
         </button>
       ))}
     </section>

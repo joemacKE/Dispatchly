@@ -1366,3 +1366,264 @@ h4 {
 .qr-modal img {
   margin: auto;
 }
+/* ===================================
+   Rider Dashboard Stats Cards
+=================================== */
+
+
+.rider-stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(180px, 1fr));
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
+}
+
+
+.rider-stat-card {
+  border: none;
+
+  background:
+    white;
+
+  border-radius:
+    16px;
+
+  padding:
+    1.25rem;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    flex-start;
+
+  gap:
+    .5rem;
+
+  cursor:
+    pointer;
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.08);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.rider-stat-card:hover {
+
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.12);
+
+}
+
+
+.rider-stat-card.active {
+
+  border:
+    2px solid #2563eb;
+
+}
+
+
+.rider-stat-icon {
+
+  font-size:
+    1.5rem;
+
+}
+
+
+.rider-stat-card span {
+
+  color:
+    #64748b;
+
+  font-size:
+    .9rem;
+
+}
+
+
+.rider-stat-card strong {
+
+  font-size:
+    2rem;
+
+  font-weight:
+    700;
+
+}
+@media(max-width:900px){
+
+  .rider-stats-grid{
+
+    grid-template-columns:
+      repeat(2,1fr);
+
+  }
+
+}
+
+
+@media(max-width:500px){
+
+  .rider-stats-grid{
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+}
+.rider-stat-card {
+
+  background:white;
+
+  border-radius:20px;
+
+  padding:24px;
+
+  display:flex;
+
+  gap:20px;
+
+  align-items:center;
+
+  text-align:left;
+
+  border:1px solid #e5e7eb;
+
+}
+
+
+.rider-card-icon {
+
+  width:56px;
+
+  height:56px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  font-size:24px;
+
+  background:#eff6ff;
+
+}
+
+
+.rider-card-content {
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+
+.rider-card-content span {
+
+  font-size:14px;
+
+  color:#64748b;
+
+}
+
+
+.rider-card-content strong {
+
+  font-size:32px;
+
+  font-weight:700;
+
+}
+
+
+.rider-card-content small {
+
+  color:#94a3b8;
+
+}
+/* Rider Orders Table */
+
+.rider-table-wrapper {
+  background:white;
+  border-radius:20px;
+  overflow:auto;
+  border:1px solid #e5e7eb;
+}
+
+
+.rider-orders-table {
+
+  width:100%;
+  border-collapse:collapse;
+
+}
+
+
+.rider-orders-table th {
+
+  text-align:left;
+
+  padding:18px;
+
+  background:#f8fafc;
+
+  color:#64748b;
+
+  font-size:.85rem;
+
+}
+
+
+.rider-orders-table td {
+
+  padding:18px;
+
+  border-top:1px solid #eef2f7;
+
+  color:#334155;
+
+}
+
+
+.rider-orders-table tr:hover {
+
+  background:#f8fafc;
+
+}
+
+
+.table-action {
+
+  white-space:nowrap;
+
+}
+
+
+.completed-label {
+
+  color:#16a34a;
+
+  font-weight:600;
+
+}

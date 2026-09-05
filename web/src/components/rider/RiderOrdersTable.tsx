@@ -5,8 +5,6 @@ type Props = {
 
   busyId: string | null;
 
-  online: boolean;
-
   onPickup: (delivery: Delivery) => void;
 
   onDelivery: (delivery: Delivery) => void;
@@ -15,51 +13,57 @@ type Props = {
 function formatStatus(status: string) {
   return status
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/\b\w/g, (value) => value.toUpperCase());
+}
+
+function formatDate(date?: string) {
+  if (!date) {
+    return "-";
+  }
+
+  return new Date(date).toLocaleString();
 }
 
 export default function RiderOrdersTable({
   deliveries,
-
   busyId,
-
-  online,
-
   onPickup,
-
   onDelivery,
 }: Props) {
+  if (!deliveries.length) {
+    return <div className="empty-state">No deliveries found.</div>;
+  }
+
   return (
-    <div className="orders-table-wrapper">
-      <table className="orders-table">
+    <div className="rider-table-wrapper">
+      <table className="rider-orders-table">
         <thead>
           <tr>
+            <th>#</th>
             <th>Customer</th>
-
             <th>Phone</th>
-
             <th>Package</th>
-
+            <th>Address</th>
             <th>Status</th>
-
+            <th>Created</th>
             <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
-          {deliveries.map((delivery) => (
+          {deliveries.map((delivery, index) => (
             <tr key={delivery.id}>
+              <td>{index + 1}</td>
+
               <td>
                 <strong>{delivery.customer_name}</strong>
-
-                <br />
-
-                <small>{delivery.customer_address}</small>
               </td>
 
               <td>{delivery.customer_phone}</td>
 
               <td>{delivery.item_description}</td>
+
+              <td>{delivery.customer_address}</td>
 
               <td>
                 <span className={`status-badge ${delivery.status}`}>
@@ -67,25 +71,33 @@ export default function RiderOrdersTable({
                 </span>
               </td>
 
+              <td>{formatDate(delivery.created_at)}</td>
+
               <td>
                 {delivery.status === "assigned" && (
                   <button
-                    className="primary-button"
-                    disabled={busyId === delivery.id || !online}
+                    className="primary-button table-action"
+                    disabled={busyId === delivery.id}
                     onClick={() => onPickup(delivery)}
                   >
-                    Verify Pickup
+                    {busyId === delivery.id ? "Scanning..." : "Scan Pickup QR"}
                   </button>
                 )}
 
                 {delivery.status === "in_transit" && (
                   <button
-                    className="primary-button"
+                    className="primary-button table-action"
                     disabled={busyId === delivery.id}
                     onClick={() => onDelivery(delivery)}
                   >
-                    Complete Delivery
+                    {busyId === delivery.id
+                      ? "Scanning..."
+                      : "Scan Delivery QR"}
                   </button>
+                )}
+
+                {delivery.status === "delivered" && (
+                  <span className="completed-label">Completed ✓</span>
                 )}
               </td>
             </tr>

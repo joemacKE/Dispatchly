@@ -11,7 +11,9 @@ import {
 
 import { useAuth } from "../auth/AuthContext";
 
-import RiderDeliveryCard from "../components/RiderDeliveryCard";
+import RiderOrdersTable from "../components/rider/RiderOrdersTable";
+import RiderStatsCards from "../components/rider/RiderStatsCards";
+import QrScanner from "../components/QrScanner";
 
 import {
   clearOfflineQueue,
@@ -59,6 +61,16 @@ export default function RiderDashboardPage() {
   const riderId = user?.id || "unknown";
 
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<
+    "" | "assigned" | "in_transit" | "delivered"
+  >("");
+  const [scannerOpen, setScannerOpen] = useState(false);
+
+  const [scanMode, setScanMode] = useState<"pickup" | "delivery">("pickup");
+
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
+    null,
+  );
 
   const [loading, setLoading] = useState(true);
 
@@ -76,8 +88,8 @@ export default function RiderDashboardPage() {
     }
 
     try {
-      const result = await getMyDeliveries(token);
-
+      const result = await getMyDeliveries(token, selectedStatus || undefined);
+      console.log("RIDER FILTER:", selectedStatus, result.deliveries);
       setDeliveries(result.deliveries);
     } catch (error) {
       setError(
@@ -88,7 +100,7 @@ export default function RiderDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, selectedStatus]);
 
   /*
    * This remains only so riders can
@@ -148,7 +160,7 @@ export default function RiderDashboardPage() {
 
   useEffect(() => {
     void loadDeliveries();
-  }, [loadDeliveries]);
+  }, [loadDeliveries, selectedStatus]);
 
   useEffect(() => {
     function handleOnline() {
@@ -276,7 +288,37 @@ export default function RiderDashboardPage() {
       setBusyId(null);
     }
   }
+  function openPickupScanner(delivery: Delivery) {
+    setSelectedDelivery(delivery);
 
+    setScanMode("pickup");
+
+    setScannerOpen(true);
+  }
+
+  function openDeliveryScanner(delivery: Delivery) {
+    setSelectedDelivery(delivery);
+
+    setScanMode("delivery");
+
+    setScannerOpen(true);
+  }
+
+  async function handleScan(value: string) {
+    if (!selectedDelivery) {
+      return;
+    }
+
+    setScannerOpen(false);
+
+    if (scanMode === "pickup") {
+      await verifyPickupQr(selectedDelivery, value);
+
+      return;
+    }
+
+    await completeDelivery(selectedDelivery, value);
+  }
   function discardQueue() {
     const confirmed = window.confirm(
       "Discard all legacy unsynchronized rider events?",
@@ -328,25 +370,21 @@ export default function RiderDashboardPage() {
           </span>
         </header>
 
-        <section className="rider-stats">
-          <article>
-            <span>Assigned</span>
+        <RiderStatsCards
+          stats={{
+            assigned: counts.assigned,
 
-            <strong>{counts.assigned}</strong>
-          </article>
+            in_transit: counts.inTransit,
 
-          <article>
-            <span>In Transit</span>
+            delivered: deliveries.filter(
+              (delivery) => delivery.status === "delivered",
+            ).length,
 
-            <strong>{counts.inTransit}</strong>
-          </article>
-
-          <article>
-            <span>Active Jobs</span>
-
-            <strong>{counts.active}</strong>
-          </article>
-        </section>
+            active: counts.active,
+          }}
+          selected={selectedStatus}
+          onSelect={setSelectedStatus}
+        />
 
         {!online && (
           <section className="offline-banner">
@@ -409,18 +447,28 @@ export default function RiderDashboardPage() {
         ) : deliveries.length === 0 ? (
           <div className="empty-state">No active deliveries.</div>
         ) : (
-          <div className="delivery-list">
-            {deliveries.map((delivery) => (
-              <RiderDeliveryCard
-                key={delivery.id}
-                delivery={delivery}
-                busy={busyId === delivery.id}
-                online={online}
-                onVerifyPickup={verifyPickupQr}
-                onComplete={completeDelivery}
-              />
-            ))}
-          </div>
+          <RiderOrdersTable
+            deliveries={deliveries}
+            busyId={busyId}
+            onPickup={openPickupScanner}
+            onDelivery={openDeliveryScanner}
+          />
+        )}
+        {scannerOpen && (
+          <QrScanner
+            title={
+              scanMode === "pickup" ? "Scan Pickup QR" : "Scan Delivery QR"
+            }
+            instruction={
+              scanMode === "pickup"
+                ? "Scan the retailer pickup QR code."
+                : "Scan the customer delivery QR code."
+            }
+            onScan={handleScan}
+            onCancel={() => {
+              setScannerOpen(false);
+            }}
+          />
         )}
       </main>
     </div>
