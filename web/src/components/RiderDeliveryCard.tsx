@@ -25,7 +25,7 @@ type Props = {
 function statusLabel(status: string) {
   return status
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (value) => value.toUpperCase());
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function cleanQrValue(value: string) {
@@ -33,16 +33,6 @@ function cleanQrValue(value: string) {
     .trim()
     .replace(/[\r\n\t]/g, "")
     .replace(/\s+/g, "");
-
-  /*
-   * Handles QR codes containing URLs.
-   *
-   * Example:
-   * https://reflex.com/delivery/TOKEN
-   *
-   * becomes:
-   * TOKEN
-   */
 
   if (cleaned.includes("/")) {
     cleaned = cleaned.split("/").pop()?.trim() || cleaned;
@@ -53,37 +43,27 @@ function cleanQrValue(value: string) {
 
 export default function RiderDeliveryCard({
   delivery,
-
   busy,
-
   online,
-
   onVerifyPickup,
-
   onComplete,
 }: Props) {
   const [showScanner, setShowScanner] = useState(false);
 
-  const [showPod, setShowPod] = useState(false);
+  const [showDeliveryConfirm, setShowDeliveryConfirm] = useState(false);
 
-  const [scanMode, setScanMode] = useState<ScanMode>("delivery");
+  const [scanMode, setScanMode] = useState<ScanMode>("pickup");
 
-  const [qrToken, setQrToken] = useState("");
+  const [deliveryToken, setDeliveryToken] = useState("");
 
   const [recipient, setRecipient] = useState("");
 
   const [error, setError] = useState("");
 
-  /*
-   * PICKUP QR VERIFICATION
-   */
-
   const verifyPickupQr = useCallback(
     async (value: string) => {
-      setError("");
-
       if (!online) {
-        setError("Internet access is required to verify pickup.");
+        setError("Internet connection is required.");
 
         return;
       }
@@ -91,7 +71,7 @@ export default function RiderDeliveryCard({
       const cleaned = cleanQrValue(value);
 
       if (!cleaned) {
-        setError("The scanned pickup QR code is empty.");
+        setError("Invalid pickup QR code.");
 
         return;
       }
@@ -100,27 +80,21 @@ export default function RiderDeliveryCard({
         await onVerifyPickup(delivery, cleaned);
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Unable to verify pickup",
+          error instanceof Error ? error.message : "Pickup verification failed",
         );
       }
     },
-    [online, delivery, onVerifyPickup],
+    [delivery, online, onVerifyPickup],
   );
-
-  /*
-   * QR SCANNER CALLBACK
-   */
 
   const handleScan = useCallback(
     (value: string) => {
       const cleaned = cleanQrValue(value);
 
-      console.log("SCANNED QR VALUE:", cleaned);
-
       setShowScanner(false);
 
       if (!cleaned) {
-        setError("The scanned QR code is empty.");
+        setError("Invalid QR code.");
 
         return;
       }
@@ -131,62 +105,33 @@ export default function RiderDeliveryCard({
         return;
       }
 
-      /*
-       * IMPORTANT:
-       *
-       * Store exactly the scanned
-       * customer delivery token.
-       */
+      setDeliveryToken(cleaned);
 
-      setQrToken(cleaned);
-
-      setShowPod(true);
-
-      setError("");
+      setShowDeliveryConfirm(true);
     },
     [scanMode, verifyPickupQr],
   );
 
-  /*
-   * COMPLETE DELIVERY
-   */
-
-  async function complete() {
-    setError("");
-
-    if (!qrToken.trim()) {
-      setError("Scan the customer's delivery QR code first.");
-
-      return;
-    }
-
+  async function confirmDelivery() {
     try {
-      await onComplete(delivery, qrToken.trim(), recipient.trim());
+      await onComplete(delivery, deliveryToken, recipient.trim());
 
-      setShowPod(false);
-
-      setQrToken("");
+      setDeliveryToken("");
 
       setRecipient("");
+
+      setShowDeliveryConfirm(false);
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Unable to complete delivery",
+        error instanceof Error ? error.message : "Delivery confirmation failed",
       );
     }
   }
 
-  function openPickupScanner() {
+  function openScanner(mode: ScanMode) {
     setError("");
 
-    setScanMode("pickup");
-
-    setShowScanner(true);
-  }
-
-  function openDeliveryScanner() {
-    setError("");
-
-    setScanMode("delivery");
+    setScanMode(mode);
 
     setShowScanner(true);
   }
@@ -219,12 +164,6 @@ export default function RiderDeliveryCard({
 
           <strong>{delivery.item_description}</strong>
         </div>
-
-        <div>
-          <small>Version</small>
-
-          <strong>{delivery.version}</strong>
-        </div>
       </div>
 
       <div className="card-actions">
@@ -232,9 +171,9 @@ export default function RiderDeliveryCard({
           <button
             className="primary-button"
             disabled={busy || !online}
-            onClick={openPickupScanner}
+            onClick={() => openScanner("pickup")}
           >
-            {busy ? "Verifying..." : "Scan Pickup QR"}
+            {busy ? "Verifying..." : "Verify Pickup"}
           </button>
         )}
 
@@ -242,47 +181,53 @@ export default function RiderDeliveryCard({
           <button
             className="primary-button"
             disabled={busy}
-            onClick={openDeliveryScanner}
+            onClick={() => openScanner("delivery")}
           >
-            Scan Delivery QR
+            Complete Delivery
           </button>
         )}
       </div>
 
-      {showPod && delivery.status === "in_transit" && (
-        <div className="pod-box">
-          <strong>Delivery QR scanned</strong>
+      {error && <div className="error-box">{error}</div>}
 
-          <label>
-            Recipient name
+      {showDeliveryConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <button
+              className="scanner-close"
+              onClick={() => setShowDeliveryConfirm(false)}
+            >
+              ×
+            </button>
+
+            <h3>Confirm Delivery</h3>
+
+            <p>Delivery QR scanned successfully.</p>
+
             <input
               value={recipient}
               onChange={(event) => setRecipient(event.target.value)}
-              placeholder="Optional"
+              placeholder="Recipient name (optional)"
             />
-          </label>
 
-          {error && <div className="error-box">{error}</div>}
-
-          <button
-            className="primary-button"
-            disabled={busy}
-            onClick={() => void complete()}
-          >
-            {busy ? "Confirming..." : "Mark Delivered"}
-          </button>
+            <button
+              className="primary-button"
+              disabled={busy}
+              onClick={() => void confirmDelivery()}
+            >
+              {busy ? "Confirming..." : "Mark Delivered"}
+            </button>
+          </div>
         </div>
       )}
 
-      {error && !showPod && <div className="error-box">{error}</div>}
-
       {showScanner && (
         <QrScanner
-          title={scanMode === "pickup" ? "Scan Pickup QR" : "Scan Delivery QR"}
+          title={scanMode === "pickup" ? "Verify Pickup" : "Complete Delivery"}
           instruction={
             scanMode === "pickup"
-              ? "Point the camera at the retailer pickup QR code."
-              : "Point the camera at the customer delivery QR code."
+              ? "Scan the retailer pickup QR code."
+              : "Scan the customer delivery QR code."
           }
           onScan={handleScan}
           onCancel={() => setShowScanner(false)}

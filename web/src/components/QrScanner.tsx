@@ -68,8 +68,6 @@ export default function QrScanner({
               // ignore stop race
             }
 
-            console.log("QR DETECTED:", decodedText);
-
             onScan(decodedText);
           },
 

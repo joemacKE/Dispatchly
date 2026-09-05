@@ -26,6 +26,9 @@ type DeliveryForm = {
   payment_method: "prepaid" | "cash_on_delivery";
   payment_amount?: number;
 };
+import { getPickupQr, getDeliveryQr } from "../api/client";
+
+import QrModal from "../components/QrModal";
 
 export default function DashboardPage() {
   const { token, user, logout } = useAuth();
@@ -43,6 +46,11 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   const [live, setLive] = useState(false);
+  const [qrValue, setQrValue] = useState("");
+
+  const [qrTitle, setQrTitle] = useState("");
+
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const loadOrders = useCallback(async () => {
     if (!token) {
@@ -175,6 +183,47 @@ export default function DashboardPage() {
       );
     }
   }
+  async function openPickupQr(order: Delivery) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const qr = await getPickupQr(token, order.id);
+
+      setQrValue(qr);
+
+      setQrTitle("Pickup QR Code");
+
+      setShowQrModal(true);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Unable to generate pickup QR",
+      );
+    }
+  }
+
+  async function openDeliveryQr(order: Delivery) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const qr = await getDeliveryQr(token, order.id);
+
+      setQrValue(qr);
+
+      setQrTitle("Delivery QR Code");
+
+      setShowQrModal(true);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate delivery QR",
+      );
+    }
+  }
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -260,11 +309,25 @@ export default function DashboardPage() {
               <div className="empty-state">No orders found.</div>
             ) : (
               <div className="orders-table-wrapper">
-                <OrdersTable orders={orders} />
+                <OrdersTable
+                  orders={orders}
+                  onPickupQr={openPickupQr}
+                  onDeliveryQr={openDeliveryQr}
+                />
               </div>
             )}
           </div>
         </section>
+        {showQrModal && (
+          <QrModal
+            title={qrTitle}
+            qrValue={qrValue}
+            onClose={() => {
+              setShowQrModal(false);
+              setQrValue("");
+            }}
+          />
+        )}
       </main>
     </div>
   );
