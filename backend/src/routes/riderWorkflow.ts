@@ -175,62 +175,48 @@ const status =
 
 
       const result =
-        await db.query(
-          `
-          SELECT
-            dr.id,
-            dr.customer_name,
-            dr.customer_phone,
-            dr.customer_address,
-            dr.item_description,
-            dr.status,
-            dr.version,
-            dr.created_at,
-            dr.updated_at,
+  await db.query(
+    `
+    SELECT
+      dr.id,
+      dr.customer_name,
+      dr.customer_phone,
+      dr.customer_address,
+      dr.item_description,
+      dr.status,
+      dr.version,
+      dr.created_at,
+      dr.updated_at,
 
-            a.id AS assignment_id,
-            a.assigned_at,
-            a.is_current
+      a.id AS assignment_id,
+      a.assigned_at,
+      a.is_current
 
-          FROM assignments a
+    FROM assignments a
 
-          JOIN delivery_requests dr
-            ON dr.id =
-               a.delivery_request_id
+    JOIN delivery_requests dr
+      ON dr.id = a.delivery_request_id
 
-          WHERE a.rider_id = $1
+    WHERE a.rider_id = $1
 
-            AND a.is_current = TRUE
+      AND a.is_current = TRUE
 
-            AND dr.business_id = $2
+      AND dr.business_id = $2
 
-            /*
-             * New custody workflow:
-             *
-             * assigned
-             *     |
-             *     | pickup QR verification
-             *     v
-             * in_transit
-             *
-             * picked_up is intentionally removed.
-             */
+      AND (
+        $3 IS NULL
+        OR dr.status = $3
+      )
 
-           AND (
-  $3::text IS NULL
-  OR dr.status = $3
-)
-
-          ORDER BY
-            a.assigned_at DESC;
-          `,
-          [
-            user.sub,
-            user.business_id,
-            status ?? null,
-          ]
-        );
-
+    ORDER BY
+      a.assigned_at DESC;
+    `,
+    [
+      user.sub,
+      user.business_id,
+      status ?? null,
+    ],
+  );
 
       return reply.send({
         success: true,
