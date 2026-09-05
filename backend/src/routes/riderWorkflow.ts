@@ -23,6 +23,18 @@ const paramsSchema =
       z.string().uuid(),
   });
 
+
+const querySchema =
+  z.object({
+    status:
+      z.enum([
+        "assigned",
+        "in_transit",
+        "delivered",
+      ])
+      .optional(),
+  });
+
 /*
  * ==========================================================
  * LEGACY STATUS REQUEST SCHEMA
@@ -119,6 +131,7 @@ export default async function riderWorkflowRoutes(
 
           const user =
             request.user as AuthUser;
+            
 
 
           if (
@@ -150,6 +163,15 @@ export default async function riderWorkflowRoutes(
 
       const user =
         request.user as AuthUser;
+        const parsedQuery =
+  querySchema.safeParse(
+    request.query
+  );
+
+const status =
+  parsedQuery.success
+    ? parsedQuery.data.status
+    : undefined;
 
 
       const result =
@@ -194,10 +216,10 @@ export default async function riderWorkflowRoutes(
              * picked_up is intentionally removed.
              */
 
-            AND dr.status IN (
-              'assigned',
-              'in_transit'
-            )
+           AND (
+  $3::text IS NULL
+  OR dr.status = $3
+)
 
           ORDER BY
             a.assigned_at DESC;
@@ -205,6 +227,7 @@ export default async function riderWorkflowRoutes(
           [
             user.sub,
             user.business_id,
+            status ?? null,
           ]
         );
 

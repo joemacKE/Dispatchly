@@ -20,10 +20,6 @@ export default function QrModal({ title, qrValue, onClose }: Props) {
           )}`}
           alt="QR Code"
         />
-
-        <button className="secondary-button" onClick={onClose}>
-          Close
-        </button>
       </div>
     </div>
   );

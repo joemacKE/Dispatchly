@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/react-fontawesome": "^3.5.0",
     "fastify-print-routes": "^4.1.0",
     "html5-qrcode": "^2.3.8",
     "qrcode.react": "^4.2.0",
