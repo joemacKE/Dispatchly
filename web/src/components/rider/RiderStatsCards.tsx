@@ -25,13 +25,15 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
     key: StatusFilter;
     title: string;
     value: number;
-    icon: any;
+    icon: typeof faTruck;
+    color: string;
   }[] = [
     {
       key: "",
       title: "Active Jobs",
       value: stats.active,
       icon: faTruck,
+      color: "green",
     },
 
     {
@@ -39,6 +41,7 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
       title: "Assigned",
       value: stats.assigned,
       icon: faBox,
+      color: "blue",
     },
 
     {
@@ -46,6 +49,7 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
       title: "In Transit",
       value: stats.in_transit,
       icon: faRoute,
+      color: "orange",
     },
 
     {
@@ -53,6 +57,7 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
       title: "Delivered",
       value: stats.delivered,
       icon: faCircleCheck,
+      color: "purple",
     },
   ];
 
@@ -62,12 +67,17 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
         <button
           key={card.title}
           type="button"
-          className={
-            selected === card.key ? "rider-stat-card active" : "rider-stat-card"
-          }
-          onClick={() => onSelect(card.key)}
+          className={`
+rider-stat-card
+${card.color}
+${selected === card.key ? "active" : ""}
+`}
+          onClick={() => {
+            console.log("CARD CLICKED:", card.key);
+            onSelect(card.key);
+          }}
         >
-          <div className="rider-card-icon">
+          <div className="rider-stat-icon">
             <FontAwesomeIcon icon={card.icon} />
           </div>
 

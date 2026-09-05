@@ -273,50 +273,36 @@ export async function assignDelivery(
  */
 
 export async function getMyDeliveries(
-  token: string,
-  status?: 
-    | "assigned"
-    | "in_transit"
-    | "delivered"
-){
+  token:string,
+  status?: "assigned" | "in_transit" | "delivered",
+) {
 
-  const url =
-    new URL(
-      `${API_URL}/riders/me/deliveries`
-    );
-
-
-  if(status){
-    url.searchParams.set(
-      "status",
-      status
-    );
-  }
-
+  const query =
+    status
+      ? `?status=${status}`
+      : "";
 
   const response =
     await fetch(
-      url.toString(),
+      `${API_URL}/riders/me/deliveries${query}`,
       {
         headers:{
           Authorization:
             `Bearer ${token}`,
         },
-      }
+      },
     );
 
 
-  return parseResponse<{
-    success:boolean;
+  if (!response.ok) {
+    throw new Error(
+      "Unable to load deliveries",
+    );
+  }
 
-    count:number;
 
-    deliveries:Delivery[];
-
-  }>(response);
-
+  return response.json();
 }
-
 
 
 /*

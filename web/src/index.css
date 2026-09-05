@@ -442,11 +442,13 @@ h4 {
 
 .rider-page {
   width: min(
-    760px,
-    calc(100% - 30px)
+    1400px,
+    calc(100% - 48px)
   );
-  margin: auto;
-  padding: 30px 0 60px;
+
+  margin:auto;
+
+  padding:50px 0 60px;
 }
 
 .rider-heading {
@@ -1371,102 +1373,149 @@ h4 {
 =================================== */
 
 
+/* ===================================
+   Rider Dashboard Stats Cards
+=================================== */
+
+/* ===================================
+   Rider Dashboard Stats Cards
+=================================== */
+
 .rider-stats-grid {
-  display: grid;
+
+  display:grid;
 
   grid-template-columns:
-    repeat(4, minmax(180px, 1fr));
+    repeat(4, minmax(220px, 1fr));
 
-  gap: 1rem;
+  gap:24px;
 
-  margin-bottom: 1.5rem;
+  margin-bottom:32px;
+
 }
 
 
 .rider-stat-card {
-  border: none;
 
-  background:
-    white;
+  width:100%;
 
-  border-radius:
-    16px;
+  min-height:170px;
 
-  padding:
-    1.25rem;
+  background:white;
 
-  display:
-    flex;
+  border:1px solid #e5e7eb;
 
-  flex-direction:
-    column;
+  border-radius:20px;
 
-  align-items:
-    flex-start;
+  padding:24px;
 
-  gap:
-    .5rem;
+  display:flex;
 
-  cursor:
-    pointer;
+  flex-direction:column;
 
-  box-shadow:
-    0 8px 24px rgba(0,0,0,.08);
+  justify-content:center;
+
+  align-items:flex-start;
+
+  gap:14px;
+
+  cursor:pointer;
 
   transition:
     transform .2s ease,
-    box-shadow .2s ease;
+    box-shadow .2s ease,
+    border-color .2s ease;
+
 }
 
 
 .rider-stat-card:hover {
 
-  transform:
-    translateY(-4px);
+  transform:translateY(-4px);
 
   box-shadow:
-    0 12px 30px rgba(0,0,0,.12);
+    0 14px 30px rgba(15,23,42,.10);
 
 }
 
 
 .rider-stat-card.active {
-
-  border:
-    2px solid #2563eb;
+  border:2px solid #1d6e59;
+  box-shadow:
+    0 10px 30px rgba(29,110,89,.15);
 
 }
 
 
 .rider-stat-icon {
 
-  font-size:
-    1.5rem;
+  width:52px;
+
+  height:52px;
+
+  border-radius:16px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  background:#ecfdf5;
+
+  color:#1d6e59;
+
+  font-size:22px;
 
 }
 
 
-.rider-stat-card span {
+.rider-card-content {
 
-  color:
-    #64748b;
+  display:flex;
 
-  font-size:
-    .9rem;
+  flex-direction:column;
+
+  gap:6px;
+
+}
+
+
+.rider-card-content span {
+
+  color:#64748b;
+
+  font-size:14px;
+
+  font-weight:600;
 
 }
 
 
-.rider-stat-card strong {
+.rider-card-content strong {
 
-  font-size:
-    2rem;
+  color:#172033;
 
-  font-weight:
-    700;
+ font-size:42px;
+letter-spacing:-1px;
+
+  font-weight:800;
+
+  line-height:1;
 
 }
-@media(max-width:900px){
+
+
+.rider-card-content small {
+
+  color:#94a3b8;
+
+  font-size:13px;
+
+}
+
+
+@media(max-width:1100px){
 
   .rider-stats-grid{
 
@@ -1478,7 +1527,7 @@ h4 {
 }
 
 
-@media(max-width:500px){
+@media(max-width:600px){
 
   .rider-stats-grid{
 
@@ -1487,82 +1536,7 @@ h4 {
 
   }
 
-}
-.rider-stat-card {
-
-  background:white;
-
-  border-radius:20px;
-
-  padding:24px;
-
-  display:flex;
-
-  gap:20px;
-
-  align-items:center;
-
-  text-align:left;
-
-  border:1px solid #e5e7eb;
-
-}
-
-
-.rider-card-icon {
-
-  width:56px;
-
-  height:56px;
-
-  border-radius:50%;
-
-  display:flex;
-
-  align-items:center;
-
-  justify-content:center;
-
-  font-size:24px;
-
-  background:#eff6ff;
-
-}
-
-
-.rider-card-content {
-
-  display:flex;
-
-  flex-direction:column;
-
-}
-
-
-.rider-card-content span {
-
-  font-size:14px;
-
-  color:#64748b;
-
-}
-
-
-.rider-card-content strong {
-
-  font-size:32px;
-
-  font-weight:700;
-
-}
-
-
-.rider-card-content small {
-
-  color:#94a3b8;
-
-}
-/* Rider Orders Table */
+}/* Rider Orders Table */
 
 .rider-table-wrapper {
   background:white;
@@ -1625,5 +1599,166 @@ h4 {
   color:#16a34a;
 
   font-weight:600;
+
+}
+.rider-stat-card.green .rider-stat-icon {
+ background:#dcfce7;
+ color:#15803d;
+}
+
+
+.rider-stat-card.blue .rider-stat-icon {
+ background:#dbeafe;
+ color:#2563eb;
+}
+
+
+.rider-stat-card.orange .rider-stat-icon {
+ background:#ffedd5;
+ color:#ea580c;
+}
+
+
+.rider-stat-card.purple .rider-stat-icon {
+ background:#ede9fe;
+ color:#7c3aed;
+}
+/* ===================================
+   Rider Orders Table
+=================================== */
+
+
+.rider-table-container {
+
+  width:100%;
+
+  overflow-x:auto;
+
+  background:white;
+
+  border-radius:18px;
+
+  border:1px solid #e5e7eb;
+
+}
+
+
+
+.rider-orders-table {
+
+  width:100%;
+
+  border-collapse:collapse;
+
+  min-width:900px;
+
+}
+
+
+
+.rider-orders-table thead {
+
+  position:sticky;
+
+  top:0;
+
+  background:#f8fafc;
+
+  z-index:2;
+
+}
+
+
+
+.rider-orders-table th {
+
+  text-align:left;
+
+  padding:16px 20px;
+
+  font-size:13px;
+
+  color:#64748b;
+
+  font-weight:700;
+
+}
+
+
+
+.rider-orders-table td {
+
+  padding:18px 20px;
+
+  border-top:1px solid #edf0f3;
+
+  color:#334155;
+
+}
+
+
+
+.rider-orders-table tbody tr {
+
+  transition:
+    background .15s ease;
+
+}
+
+
+
+.rider-orders-table tbody tr:hover {
+
+  background:#f8fafc;
+
+}
+
+
+
+.customer-cell {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:4px;
+
+}
+
+
+
+.customer-cell strong {
+
+  color:#172033;
+
+}
+
+
+
+.customer-cell span {
+
+  font-size:13px;
+
+  color:#64748b;
+
+}
+
+
+
+.table-action {
+
+  white-space:nowrap;
+
+}
+
+
+
+.completed-label {
+
+  color:#15803d;
+
+  font-weight:700;
+
+  font-size:14px;
 
 }

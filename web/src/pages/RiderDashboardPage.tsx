@@ -61,6 +61,8 @@ export default function RiderDashboardPage() {
   const riderId = user?.id || "unknown";
 
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+
+  const [allDeliveries, setAllDeliveries] = useState<Delivery[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<
     "" | "assigned" | "in_transit" | "delivered"
   >("");
@@ -82,26 +84,45 @@ export default function RiderDashboardPage() {
 
   const [queueCount, setQueueCount] = useState(getOfflineQueue(riderId).length);
 
-  const loadDeliveries = useCallback(async () => {
+  const loadDeliveries = useCallback(
+    async (status?: "assigned" | "in_transit" | "delivered") => {
+      if (!token) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const result = await getMyDeliveries(token, status);
+
+        console.log("FILTER RESPONSE", status, result.deliveries);
+
+        setDeliveries(result.deliveries ?? []);
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Unable to load deliveries",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
+  );
+  const loadAllDeliveries = useCallback(async () => {
     if (!token) {
       return;
     }
 
     try {
-      const result = await getMyDeliveries(token, selectedStatus || undefined);
-      console.log("RIDER FILTER:", selectedStatus, result.deliveries);
-      setDeliveries(result.deliveries);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load rider deliveries",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [token, selectedStatus]);
+      const result = await getMyDeliveries(token);
 
+      setAllDeliveries(result.deliveries ?? []);
+
+      setDeliveries(result.deliveries ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [token]);
   /*
    * This remains only so riders can
    * resolve queues created by older
@@ -159,8 +180,8 @@ export default function RiderDashboardPage() {
   }, [token, riderId, loadDeliveries]);
 
   useEffect(() => {
-    void loadDeliveries();
-  }, [loadDeliveries, selectedStatus]);
+    void loadAllDeliveries();
+  }, [loadAllDeliveries]);
 
   useEffect(() => {
     function handleOnline() {
@@ -192,18 +213,22 @@ export default function RiderDashboardPage() {
 
   const counts = useMemo(
     () => ({
-      assigned: deliveries.filter((delivery) => delivery.status === "assigned")
-        .length,
+      assigned: allDeliveries.filter(
+        (delivery) => delivery.status === "assigned",
+      ).length,
 
-      inTransit: deliveries.filter(
+      in_transit: allDeliveries.filter(
         (delivery) => delivery.status === "in_transit",
       ).length,
 
-      active: deliveries.length,
-    }),
-    [deliveries],
-  );
+      delivered: allDeliveries.filter(
+        (delivery) => delivery.status === "delivered",
+      ).length,
 
+      active: allDeliveries.length,
+    }),
+    [allDeliveries],
+  );
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
@@ -371,19 +396,13 @@ export default function RiderDashboardPage() {
         </header>
 
         <RiderStatsCards
-          stats={{
-            assigned: counts.assigned,
-
-            in_transit: counts.inTransit,
-
-            delivered: deliveries.filter(
-              (delivery) => delivery.status === "delivered",
-            ).length,
-
-            active: counts.active,
-          }}
+          stats={counts}
           selected={selectedStatus}
-          onSelect={setSelectedStatus}
+          onSelect={(status) => {
+            setSelectedStatus(status);
+
+            void loadDeliveries(status || undefined);
+          }}
         />
 
         {!online && (
@@ -430,13 +449,14 @@ export default function RiderDashboardPage() {
 
         <div className="panel-heading rider-toolbar">
           <strong>
-            {deliveries.length} active job
-            {deliveries.length === 1 ? "" : "s"}
+            {selectedStatus
+              ? `${deliveries.length} ${selectedStatus.replace("_", " ")} jobs`
+              : `${deliveries.length} active jobs`}
           </strong>
 
           <button
             className="secondary-button"
-            onClick={() => void loadDeliveries()}
+            onClick={() => void loadDeliveries(selectedStatus || undefined)}
           >
             Refresh
           </button>

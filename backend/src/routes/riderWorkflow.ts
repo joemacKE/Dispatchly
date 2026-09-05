@@ -174,7 +174,7 @@ const status =
     : undefined;
 
 
-      const result =
+    const result =
   await db.query(
     `
     SELECT
@@ -197,19 +197,22 @@ const status =
     JOIN delivery_requests dr
       ON dr.id = a.delivery_request_id
 
-    WHERE a.rider_id = $1
+   WHERE a.rider_id = $1
 
-      AND a.is_current = TRUE
+AND dr.business_id = $2
 
-      AND dr.business_id = $2
+AND (
+  a.is_current = TRUE
+  OR dr.status = 'delivered'::delivery_status
+)
 
-      AND (
-        $3 IS NULL
-        OR dr.status = $3
-      )
+AND (
+  $3::delivery_status IS NULL
+  OR dr.status = $3::delivery_status
+)
 
-    ORDER BY
-      a.assigned_at DESC;
+ORDER BY
+  a.assigned_at DESC;
     `,
     [
       user.sub,

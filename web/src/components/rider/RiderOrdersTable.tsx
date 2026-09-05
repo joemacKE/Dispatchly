@@ -35,13 +35,12 @@ export default function RiderOrdersTable({
   }
 
   return (
-    <div className="rider-table-wrapper">
+    <div className="rider-table-container">
       <table className="rider-orders-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Customer</th>
-            <th>Phone</th>
             <th>Package</th>
             <th>Address</th>
             <th>Status</th>
@@ -56,10 +55,11 @@ export default function RiderOrdersTable({
               <td>{index + 1}</td>
 
               <td>
-                <strong>{delivery.customer_name}</strong>
+                <div className="customer-cell">
+                  <strong>{delivery.customer_name}</strong>
+                  <span>{delivery.customer_phone}</span>
+                </div>
               </td>
-
-              <td>{delivery.customer_phone}</td>
 
               <td>{delivery.item_description}</td>
 
