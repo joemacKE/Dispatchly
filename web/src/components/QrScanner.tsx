@@ -4,11 +4,8 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
 type Props = {
   onScan: (qrValue: string) => void;
-
   onCancel: () => void;
-
   title?: string;
-
   instruction?: string;
 };
 
@@ -16,133 +13,86 @@ export default function QrScanner({
   onScan,
   onCancel,
   title = "Scan QR Code",
-  instruction = "Point the camera at the Reflex QR code.",
+  instruction = "Point the camera at the QR code.",
 }: Props) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  const completedRef = useRef(false);
+  const scanningRef = useRef(false);
 
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const scanner = new Html5Qrcode("reflex-qr-reader", {
-      verbose: false,
+    let mounted = true;
 
-      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-    });
-
-    scannerRef.current = scanner;
-
-    async function startScanner() {
+    async function start() {
       try {
+        const scanner = new Html5Qrcode("reflex-qr-reader", {
+          verbose: false,
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        });
+
+        scannerRef.current = scanner;
+
         await scanner.start(
           {
-            facingMode: {
-              exact: "environment",
-            },
+            facingMode: "environment",
           },
-
           {
-            fps: 15,
-
+            fps: 10,
             qrbox: {
-              width: 320,
-              height: 320,
+              width: 250,
+              height: 250,
             },
-
-            aspectRatio: 1,
           },
-
           async (decodedText) => {
-            if (completedRef.current) {
+            if (!mounted || scanningRef.current) {
               return;
             }
 
-            completedRef.current = true;
+            scanningRef.current = true;
+
+            console.log("QR SCANNED:", decodedText);
 
             try {
               if (scanner.isScanning) {
                 await scanner.stop();
               }
-            } catch {
-              // ignore stop race
-            }
+            } catch {}
 
             onScan(decodedText);
           },
-
-          () => {
-            // ignore frames without QR
-          },
+          () => {},
         );
       } catch (error) {
-        /*
-          Some browsers reject
-          exact environment.
-          Retry normally.
-        */
-
-        try {
-          await scanner.start(
-            {
-              facingMode: "environment",
-            },
-
-            {
-              fps: 15,
-
-              qrbox: {
-                width: 320,
-                height: 320,
-              },
-            },
-
-            (decodedText) => {
-              if (completedRef.current) {
-                return;
-              }
-
-              completedRef.current = true;
-
-              void scanner.stop();
-
-              onScan(decodedText);
-            },
-
-            () => {},
-          );
-        } catch (secondError) {
-          setError(
-            secondError instanceof Error
-              ? secondError.message
-              : "Unable to start camera",
-          );
-        }
+        setError(
+          error instanceof Error ? error.message : "Unable to start camera",
+        );
       }
     }
 
-    void startScanner();
+    void start();
 
     return () => {
-      completedRef.current = true;
+      mounted = false;
 
-      if (scanner.isScanning) {
-        void scanner.stop().catch(() => {});
+      const scanner = scannerRef.current;
+
+      if (scanner?.isScanning) {
+        void scanner
+          .stop()
+          .then(() => scanner.clear())
+          .catch(() => {});
       }
-
-      scanner.clear();
     };
   }, [onScan]);
 
   async function closeScanner() {
-    completedRef.current = true;
+    const scanner = scannerRef.current;
 
-    try {
-      if (scannerRef.current?.isScanning) {
-        await scannerRef.current.stop();
-      }
-    } catch {
-      // ignore
+    if (scanner?.isScanning) {
+      try {
+        await scanner.stop();
+      } catch {}
     }
 
     onCancel();
@@ -158,11 +108,7 @@ export default function QrScanner({
             <p>{instruction}</p>
           </div>
 
-          <button
-            type="button"
-            className="scanner-close"
-            onClick={() => void closeScanner()}
-          >
+          <button className="scanner-close" onClick={() => void closeScanner()}>
             ×
           </button>
         </div>
@@ -170,18 +116,6 @@ export default function QrScanner({
         <div id="reflex-qr-reader" className="qr-reader" />
 
         {error && <div className="error-box">{error}</div>}
-
-        <p className="scanner-help">
-          Camera access is used only while this scanner is open.
-        </p>
-
-        <button
-          type="button"
-          className="secondary-button scanner-cancel"
-          onClick={() => void closeScanner()}
-        >
-          Cancel
-        </button>
       </section>
     </div>
   );
