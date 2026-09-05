@@ -6,7 +6,9 @@ import {
   faRoute,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
+
 type StatusFilter = "" | "assigned" | "in_transit" | "delivered";
+
 type Props = {
   stats: {
     assigned: number;
@@ -17,7 +19,7 @@ type Props = {
 
   selected: string;
 
-  onSelect: (status: "" | "assigned" | "in_transit" | "delivered") => void;
+  onSelect: (status: StatusFilter) => void;
 };
 
 export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
@@ -67,27 +69,22 @@ export default function RiderStatsCards({ stats, selected, onSelect }: Props) {
         <button
           key={card.title}
           type="button"
-          className={`
-rider-stat-card
-${card.color}
-${selected === card.key ? "active" : ""}
-`}
-          onClick={() => {
-            console.log("CARD CLICKED:", card.key);
-            onSelect(card.key);
-          }}
+          className={
+            selected === card.key ? "rider-stat-card active" : "rider-stat-card"
+          }
+          onClick={() => onSelect(card.key)}
         >
-          <div className="rider-stat-icon">
+          <div className={`rider-stat-icon ${card.color}`}>
             <FontAwesomeIcon icon={card.icon} />
           </div>
 
-          <div className="rider-card-content">
+          <div className="rider-stat-info">
             <span>{card.title}</span>
 
-            <strong>{card.value}</strong>
-
-            <small>View deliveries</small>
+            <small>View deliveries →</small>
           </div>
+
+          <strong className="rider-stat-number">{card.value}</strong>
         </button>
       ))}
     </section>

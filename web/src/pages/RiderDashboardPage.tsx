@@ -470,6 +470,7 @@ export default function RiderDashboardPage() {
           <RiderOrdersTable
             deliveries={deliveries}
             busyId={busyId}
+            selectedStatus={selectedStatus}
             onPickup={openPickupScanner}
             onDelivery={openDeliveryScanner}
           />

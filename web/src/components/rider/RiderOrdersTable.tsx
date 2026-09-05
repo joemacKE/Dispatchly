@@ -1,9 +1,20 @@
 import type { Delivery } from "../../types";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import {
+  faTruck,
+  faBox,
+  faRoute,
+  faCircleCheck,
+} from "@fortawesome/free-solid-svg-icons";
+
 type Props = {
   deliveries: Delivery[];
 
   busyId: string | null;
+
+  selectedStatus?: string;
 
   onPickup: (delivery: Delivery) => void;
 
@@ -24,14 +35,70 @@ function formatDate(date?: string) {
   return new Date(date).toLocaleString();
 }
 
+function EmptyDeliveryState({ status }: { status?: string }) {
+  const emptyStates = {
+    assigned: {
+      icon: faBox,
+
+      title: "No Assigned Deliveries",
+
+      message: "There are currently no deliveries waiting for pickup.",
+    },
+
+    in_transit: {
+      icon: faRoute,
+
+      title: "No In Transit Deliveries",
+
+      message: "There are currently no deliveries being transported.",
+    },
+
+    delivered: {
+      icon: faCircleCheck,
+
+      title: "No Delivered Deliveries",
+
+      message: "Completed deliveries will appear here.",
+    },
+
+    default: {
+      icon: faTruck,
+
+      title: "No Active Deliveries",
+
+      message: "There are currently no active delivery jobs.",
+    },
+  };
+
+  const state =
+    emptyStates[status as keyof typeof emptyStates] ?? emptyStates.default;
+
+  return (
+    <div className="empty-delivery-state">
+      <div className="empty-delivery-icon">
+        <FontAwesomeIcon icon={state.icon} />
+      </div>
+
+      <h3>{state.title}</h3>
+
+      <p>{state.message}</p>
+    </div>
+  );
+}
+
 export default function RiderOrdersTable({
   deliveries,
+
   busyId,
+
+  selectedStatus,
+
   onPickup,
+
   onDelivery,
 }: Props) {
   if (!deliveries.length) {
-    return <div className="empty-state">No deliveries found.</div>;
+    return <EmptyDeliveryState status={selectedStatus} />;
   }
 
   return (
@@ -40,11 +107,17 @@ export default function RiderOrdersTable({
         <thead>
           <tr>
             <th>#</th>
+
             <th>Customer</th>
+
             <th>Package</th>
+
             <th>Address</th>
+
             <th>Status</th>
+
             <th>Created</th>
+
             <th>Action</th>
           </tr>
         </thead>
@@ -57,6 +130,7 @@ export default function RiderOrdersTable({
               <td>
                 <div className="customer-cell">
                   <strong>{delivery.customer_name}</strong>
+
                   <span>{delivery.customer_phone}</span>
                 </div>
               </td>
@@ -97,7 +171,9 @@ export default function RiderOrdersTable({
                 )}
 
                 {delivery.status === "delivered" && (
-                  <span className="completed-label">Completed ✓</span>
+                  <span className="completed-label">
+                    <FontAwesomeIcon icon={faCircleCheck} /> Completed
+                  </span>
                 )}
               </td>
             </tr>
