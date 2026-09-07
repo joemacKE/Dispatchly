@@ -3,6 +3,7 @@ import ProblemSection from "../components/landing/ProblemSection";
 import SolutionSection from "../components/landing/SolutionSection";
 import HowItWorks from "../components/landing/HowItWorks";
 import FeaturesSection from "../components/landing/FeaturesSection";
+import CustomerSegments from "../components/landing/CustomerSegments";
 
 export default function LandingPage() {
   return (
@@ -13,6 +14,7 @@ export default function LandingPage() {
       <SolutionSection />
       <HowItWorks />
       <FeaturesSection />
+      <CustomerSegments />
     </main>
   );
 }

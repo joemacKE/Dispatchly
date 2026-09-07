@@ -1,4 +1,4 @@
-import FeatureShowcase from "./FeatureShowcase";
+import FeatureCard from "./FeatureCard";
 
 import {
   faGaugeHigh,
@@ -7,6 +7,77 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function FeaturesSection() {
+  const features = [
+    {
+      category: "Dispatcher Operations",
+
+      title: "Stay in control.",
+
+      description:
+        "Manage delivery requests, assign riders and monitor operations from one dashboard.",
+
+      image: "/assets/dispatcher-illustration.png",
+
+      icon: faGaugeHigh,
+
+      items: [
+        "Delivery assignment",
+
+        "Rider management",
+
+        "Real-time status tracking",
+
+        "Operational visibility",
+      ],
+    },
+
+    {
+      category: "Rider Workflow",
+
+      title: "Every rider knows what comes next.",
+
+      description:
+        "Give riders clear workflows to complete deliveries faster and more reliably.",
+
+      image: "/assets/rider-illustration.png",
+
+      icon: faMotorcycle,
+
+      items: [
+        "Assigned deliveries",
+
+        "QR verification",
+
+        "Delivery updates",
+
+        "Completion tracking",
+      ],
+    },
+
+    {
+      category: "Business Intelligence",
+
+      title: "Grow with visibility.",
+
+      description:
+        "Understand delivery performance and make better operational decisions.",
+
+      image: "/assets/business-illustration.png",
+
+      icon: faChartLine,
+
+      items: [
+        "Delivery insights",
+
+        "Performance monitoring",
+
+        "Customer experience improvement",
+
+        "Business growth",
+      ],
+    },
+  ];
+
   return (
     <section
       className="
@@ -30,14 +101,14 @@ mx-auto
         >
           <p
             className="
+text-sm
 uppercase
 tracking-[0.3em]
-text-sm
 font-bold
 text-emerald-600
 "
           >
-            The Platform
+            THE PLATFORM
           </p>
 
           <h2
@@ -58,55 +129,22 @@ text-lg
 text-slate-600
 "
           >
-            Dispatchly provides the tools businesses need to coordinate, monitor
-            and improve delivery operations.
+            Dispatchly gives businesses the tools to manage, coordinate and
+            optimize every delivery from one place.
           </p>
         </div>
 
         <div
           className="
-mt-20
-space-y-28
+mt-16
+grid
+lg:grid-cols-3
+gap-8
 "
         >
-          <FeatureShowcase
-            title="Stay in control."
-            description="Dispatchers get complete visibility into delivery operations, allowing faster decisions and better coordination."
-            icon={faGaugeHigh}
-            image="/assets/landing/dispatcher-dashboard.png"
-            items={[
-              "Delivery assignment",
-              "Rider management",
-              "Real-time status tracking",
-              "Operational visibility",
-            ]}
-          />
-
-          <FeatureShowcase
-            reverse
-            title="Every rider knows what comes next."
-            description="Riders receive clear workflows that simplify pickup, delivery and completion."
-            icon={faMotorcycle}
-            image="/assets/landing/rider-dashboard.png"
-            items={[
-              "Assigned deliveries",
-              "QR verification",
-              "Delivery updates",
-              "Completion tracking",
-            ]}
-          />
-
-          <FeatureShowcase
-            title="Grow with visibility."
-            description="Understand performance and improve operations through delivery insights."
-            icon={faChartLine}
-            image="/assets/landing/business-dashboard.png"
-            items={[
-              "Delivery insights",
-              "Performance monitoring",
-              "Operational improvement",
-            ]}
-          />
+          {features.map((feature) => (
+            <FeatureCard key={feature.title} {...feature} />
+          ))}
         </div>
       </div>
     </section>
