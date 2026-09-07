@@ -1,34 +1,15 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-
-import { useAuth } from "./auth/AuthContext";
+import { Route, Routes } from "react-router-dom";
 
 import DashboardPage from "./pages/DashboardPage";
 import DispatcherDashboardPage from "./pages/DispatcherDashboardPage";
 import LoginPage from "./pages/LoginPage";
 import RiderDashboardPage from "./pages/RiderDashboardPage";
-
-function HomeRoute() {
-  const { token, user } = useAuth();
-
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === "rider") {
-    return <Navigate to="/rider" replace />;
-  }
-
-  if (user.role === "dispatcher") {
-    return <Navigate to="/dispatcher" replace />;
-  }
-
-  return <Navigate to="/dashboard" replace />;
-}
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<HomeRoute />} />
+      <Route path="/" element={<LandingPage />} />
 
       <Route path="/login" element={<LoginPage />} />
 
@@ -37,8 +18,6 @@ export default function App() {
       <Route path="/dispatcher" element={<DispatcherDashboardPage />} />
 
       <Route path="/rider" element={<RiderDashboardPage />} />
-
-      <Route path="*" element={<HomeRoute />} />
     </Routes>
   );
 }
