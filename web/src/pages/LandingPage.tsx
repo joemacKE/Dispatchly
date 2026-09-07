@@ -4,6 +4,7 @@ import SolutionSection from "../components/landing/SolutionSection";
 import HowItWorks from "../components/landing/HowItWorks";
 import FeaturesSection from "../components/landing/FeaturesSection";
 import CustomerSegments from "../components/landing/CustomerSegments";
+import TrustSection from "../components/landing/TrustSection";
 
 export default function LandingPage() {
   return (
@@ -15,6 +16,7 @@ export default function LandingPage() {
       <HowItWorks />
       <FeaturesSection />
       <CustomerSegments />
+      <TrustSection />
     </main>
   );
 }
