@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+
+import { useNavigate } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import {
-  faBuilding,
-  faMotorcycle,
-  faUsersGear,
+  faEye,
+  faEyeSlash,
   faXmark,
+  faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
+
+import { useAuth } from "../../auth/AuthContext";
 
 type Props = {
   open: boolean;
@@ -15,38 +19,101 @@ type Props = {
   onClose: () => void;
 };
 
-const roles = [
-  {
-    id: "retailer",
-    title: "Retailer",
-    description: "Grow your business with smarter deliveries.",
-    icon: faBuilding,
-  },
+type Role = "retailer" | "dispatcher" | "rider";
 
-  {
-    id: "dispatcher",
-    title: "Dispatcher",
-    description: "Coordinate delivery operations efficiently.",
-    icon: faUsersGear,
-  },
+export default function RegisterModal({ open, onClose }: Props) {
+  const { register } = useAuth();
 
-  {
-    id: "rider",
-    title: "Rider",
-    description: "Manage deliveries and earn more.",
-    icon: faMotorcycle,
-  },
-];
+  const navigate = useNavigate();
 
-export default function RegisterModal({
-  open,
+  const [role, setRole] = useState<Role>("retailer");
 
-  onClose,
-}: Props) {
-  const [selectedRole, setSelectedRole] = useState("");
+  const [name, setName] = useState("");
+
+  const [phone, setPhone] = useState("");
+
+  const [password, setPassword] = useState("");
+
+  const [businessId, setBusinessId] = useState("");
+
+  const [businessName, setBusinessName] = useState("");
+
+  const [businessType, setBusinessType] = useState<
+    "electronics" | "pharmacy" | "hardware" | "other"
+  >("electronics");
+
+  const [businessAddress, setBusinessAddress] = useState("");
+
+  const [businessPhone, setBusinessPhone] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState("");
 
   if (!open) {
     return null;
+  }
+
+  function redirectUser(userRole: Role) {
+    if (userRole === "rider") {
+      navigate("/rider");
+      return;
+    }
+
+    if (userRole === "dispatcher") {
+      navigate("/dispatcher");
+      return;
+    }
+
+    navigate("/dashboard");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setLoading(true);
+
+    setError("");
+
+    try {
+      const user = await register({
+        role,
+
+        ...(role === "retailer"
+          ? {
+              business: {
+                name: businessName,
+
+                type: businessType,
+
+                address: businessAddress,
+
+                phone: businessPhone,
+              },
+            }
+          : {
+              business_id: businessId,
+            }),
+
+        name,
+
+        phone,
+
+        password,
+      });
+
+      onClose();
+
+      redirectUser(user.role);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Unable to create account",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -67,8 +134,10 @@ px-6
       <div
         className="
 relative
-max-w-lg
 w-full
+max-w-lg
+max-h-[90vh]
+overflow-y-auto
 rounded-3xl
 bg-white
 p-8
@@ -89,7 +158,11 @@ hover:text-slate-700
           <FontAwesomeIcon icon={faXmark} />
         </button>
 
-        <div className="text-center">
+        <div
+          className="
+text-center
+"
+        >
           <div
             className="
 mx-auto
@@ -116,7 +189,7 @@ font-black
 text-slate-900
 "
           >
-            Join Dispatchly
+            Create account
           </h2>
 
           <p
@@ -125,97 +198,194 @@ mt-2
 text-slate-500
 "
           >
-            Choose how you want to use Dispatchly.
+            Join Dispatchly delivery network.
           </p>
         </div>
 
         <div
           className="
 mt-8
-space-y-4
+grid
+grid-cols-3
+gap-3
 "
         >
-          {roles.map((role) => (
+          {[
+            {
+              id: "retailer",
+              label: "Retailer",
+            },
+            {
+              id: "dispatcher",
+              label: "Dispatcher",
+            },
+            {
+              id: "rider",
+              label: "Rider",
+            },
+          ].map((item) => (
             <button
-              key={role.id}
-              onClick={() => setSelectedRole(role.id)}
+              key={item.id}
+              type="button"
+              onClick={() => setRole(item.id as Role)}
               className={`
-w-full
-text-left
-p-5
-rounded-2xl
-border
+rounded-xl
+p-3
+font-semibold
 transition
 
 ${
-  selectedRole === role.id
-    ? "border-emerald-500 bg-emerald-50"
-    : "border-slate-200 hover:border-emerald-300"
+  role === item.id ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"
 }
 
 `}
             >
-              <div
-                className="
-flex
-items-center
-gap-4
-"
-              >
-                <div
-                  className="
-w-12
-h-12
-rounded-xl
-bg-emerald-100
-text-emerald-600
-flex
-items-center
-justify-center
-"
-                >
-                  <FontAwesomeIcon icon={role.icon} />
-                </div>
-
-                <div>
-                  <h3
-                    className="
-font-bold
-text-slate-900
-"
-                  >
-                    {role.title}
-                  </h3>
-
-                  <p
-                    className="
-text-sm
-text-slate-500
-"
-                  >
-                    {role.description}
-                  </p>
-                </div>
-              </div>
+              {item.label}
             </button>
           ))}
         </div>
 
-        <button
-          disabled={!selectedRole}
+        <form
+          onSubmit={handleSubmit}
           className="
 mt-8
+space-y-4
+"
+        >
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Full name"
+            required
+            className="input"
+          />
+
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone number"
+            required
+            className="input"
+          />
+
+          <div
+            className="
+relative
+"
+          >
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              required
+              className="input pr-12"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="
+absolute
+right-4
+top-3
+text-slate-400
+"
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+            </button>
+          </div>
+
+          {role === "retailer" ? (
+            <>
+              <input
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="Business name"
+                required
+                className="input"
+              />
+
+              <select
+                value={businessType}
+                onChange={(e) => setBusinessType(e.target.value as any)}
+                className="input"
+              >
+                <option value="electronics">Electronics</option>
+
+                <option value="pharmacy">Pharmacy</option>
+
+                <option value="hardware">Hardware</option>
+
+                <option value="other">Other</option>
+              </select>
+
+              <input
+                value={businessAddress}
+                onChange={(e) => setBusinessAddress(e.target.value)}
+                placeholder="Business address"
+                required
+                className="input"
+              />
+
+              <input
+                value={businessPhone}
+                onChange={(e) => setBusinessPhone(e.target.value)}
+                placeholder="Business phone"
+                required
+                className="input"
+              />
+            </>
+          ) : (
+            <input
+              value={businessId}
+              onChange={(e) => setBusinessId(e.target.value)}
+              placeholder="Business ID"
+              required
+              className="input"
+            />
+          )}
+
+          {error && (
+            <div
+              className="
+rounded-xl
+bg-red-50
+text-red-600
+p-3
+text-sm
+"
+            >
+              {error}
+            </div>
+          )}
+
+          <button
+            disabled={loading}
+            className="
 w-full
 rounded-xl
 bg-emerald-500
 py-4
 text-white
 font-bold
+flex
+items-center
+justify-center
+gap-3
 disabled:opacity-50
 "
-        >
-          Continue
-        </button>
+          >
+            {loading ? (
+              "Creating account..."
+            ) : (
+              <>
+                Create Account
+                <FontAwesomeIcon icon={faArrowRight} />
+              </>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

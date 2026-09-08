@@ -96,19 +96,57 @@ async function parseResponse<T>(
  * AUTH
  * ==========================================================
  */
+/*
+ * ==========================================================
+ * AUTH
+ * ==========================================================
+ */
+
+
+export type RegisterPayload = {
+  role:
+    | "retailer"
+    | "dispatcher"
+    | "rider";
+
+  business_id?: string;
+
+  business?: {
+    name: string;
+
+    type:
+      | "electronics"
+      | "pharmacy"
+      | "hardware"
+      | "other";
+
+    address: string;
+
+    phone: string;
+  };
+
+  name: string;
+
+  phone: string;
+
+  password: string;
+};
+
+
+
 
 export async function login(
-  phone:string,
-  password:string
-){
+  phone: string,
+  password: string
+): Promise<LoginResponse> {
 
   const response =
     await fetch(
       `${API_URL}/auth/login`,
       {
-        method:"POST",
+        method: "POST",
 
-        headers:{
+        headers: {
           "Content-Type":
             "application/json",
         },
@@ -125,6 +163,36 @@ export async function login(
   return parseResponse<LoginResponse>(
     response
   );
+}
+
+
+
+
+export async function register(
+  payload: RegisterPayload
+): Promise<LoginResponse> {
+
+  const response =
+    await fetch(
+      `${API_URL}/auth/register`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify(payload),
+      }
+    );
+
+
+  return parseResponse<LoginResponse>(
+    response
+  );
+
 }
 /*
  * ==========================================================
