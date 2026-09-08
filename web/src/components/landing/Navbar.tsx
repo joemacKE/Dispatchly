@@ -4,6 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
+type Props = {
+  onLogin: () => void;
+
+  onRegister: () => void;
+};
+
 const navLinks = [
   {
     name: "Home",
@@ -36,7 +42,7 @@ const navLinks = [
   },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onLogin, onRegister }: Props) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -165,6 +171,7 @@ export default function Navbar() {
           {/* Login */}
 
           <button
+            onClick={onLogin}
             className={`
               hidden
               md:block
@@ -183,6 +190,7 @@ export default function Navbar() {
           {/* Register */}
 
           <button
+            onClick={onRegister}
             className="
               hidden
               md:block
@@ -200,7 +208,7 @@ export default function Navbar() {
             Register
           </button>
 
-          {/* Demo */}
+          {/* Request Demo */}
 
           <button
             className="

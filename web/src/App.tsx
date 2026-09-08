@@ -2,22 +2,60 @@ import { Route, Routes } from "react-router-dom";
 
 import DashboardPage from "./pages/DashboardPage";
 import DispatcherDashboardPage from "./pages/DispatcherDashboardPage";
-import LoginPage from "./pages/LoginPage";
 import RiderDashboardPage from "./pages/RiderDashboardPage";
 import LandingPage from "./pages/LandingPage";
 
+import ProtectedRoute from "./auth/ProtectedRoute";
+import AuthNavigationGuard from "./auth/AuthNavigationGuard";
+import PublicRoute from "./auth/PublicationRoute";
+
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
+    <>
+      {/* Authentication history protection */}
+      <AuthNavigationGuard />
 
-      <Route path="/login" element={<LoginPage />} />
+      <Routes>
+        {/* Public landing page */}
 
-      <Route path="/dashboard" element={<DashboardPage />} />
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
 
-      <Route path="/dispatcher" element={<DispatcherDashboardPage />} />
+        {/* Protected dashboards */}
 
-      <Route path="/rider" element={<RiderDashboardPage />} />
-    </Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["retailer"]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dispatcher"
+          element={
+            <ProtectedRoute allowedRoles={["dispatcher"]}>
+              <DispatcherDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/rider"
+          element={
+            <ProtectedRoute allowedRoles={["rider"]}>
+              <RiderDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </>
   );
 }

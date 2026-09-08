@@ -1,10 +1,17 @@
+import { useState } from "react";
+
 import Navbar from "./Navbar";
 
+import LoginModal from "../auth/LoginModal";
+import RegisterModal from "../auth/RegistrationModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faArrowRight, faPlay } from "@fortawesome/free-solid-svg-icons";
 
 export default function Hero() {
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const [registerOpen, setRegisterOpen] = useState(false);
   return (
     <section
       id="home"
@@ -41,7 +48,10 @@ to-black/20
 "
       />
 
-      <Navbar />
+      <Navbar
+        onLogin={() => setLoginOpen(true)}
+        onRegister={() => setRegisterOpen(true)}
+      />
 
       {/* Content */}
 
@@ -200,6 +210,12 @@ text-2xl
           </div>
         </div>
       </div>
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+
+      <RegisterModal
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+      />
     </section>
   );
 }
