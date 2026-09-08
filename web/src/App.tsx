@@ -8,6 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import AuthNavigationGuard from "./auth/AuthNavigationGuard";
 import PublicRoute from "./auth/PublicationRoute";
+import ProfilePage from "./pages/ProfilePage";
 
 export default function App() {
   return (
@@ -28,6 +29,14 @@ export default function App() {
         />
 
         {/* Protected dashboards */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"

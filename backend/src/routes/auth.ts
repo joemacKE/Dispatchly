@@ -372,28 +372,26 @@ expires_in:
 
 
 user:{
+  id:
+    user.id,
 
-id:
-user.id,
+  business_id:
+    user.business_id,
 
-business_id:
-user.business_id,
+  name:
+    user.name,
 
-business_name:
-user.business_name,
+  phone:
+    user.phone,
 
-business_code:
-user.business_code,
+  role:
+    user.role,
 
-name:
-user.name,
+  business_name:
+    user.business_name,
 
-phone:
-user.phone,
-
-role:
-user.role,
-
+  business_code:
+    user.business_code,
 }
 
 });
@@ -775,8 +773,13 @@ user.role,
 name:
 user.name,
 
-},
+business_name:
+business?.name,
 
+business_code:
+business?.business_code,
+
+},
 {
 expiresIn:"15m"
 }

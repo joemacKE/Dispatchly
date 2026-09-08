@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import {
   API_URL,
@@ -32,6 +32,7 @@ import QrModal from "../components/QrModal";
 
 export default function DashboardPage() {
   const { token, user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState<Delivery[]>([]);
   const [dashboardStats, setDashboardStats] = useState({
@@ -51,6 +52,8 @@ export default function DashboardPage() {
   const [qrTitle, setQrTitle] = useState("");
 
   const [showQrModal, setShowQrModal] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const loadOrders = useCallback(async () => {
     if (!token) {
@@ -161,7 +164,19 @@ export default function DashboardPage() {
   if (user.role === "rider") {
     return <Navigate to="/rider" replace />;
   }
+  async function copyBusinessCode() {
+    if (!user?.business_code) {
+      return;
+    }
 
+    await navigator.clipboard.writeText(user.business_code);
+
+    setCopiedCode(true);
+
+    setTimeout(() => {
+      setCopiedCode(false);
+    }, 2000);
+  }
   async function addDelivery(data: DeliveryForm) {
     if (!token) {
       return;
@@ -226,7 +241,7 @@ export default function DashboardPage() {
   }
   return (
     <div className="app-shell">
-      <header className="topbar">
+      <header className="topbar relative z-50">
         <div className="brand-row">
           <div className="brand-mark small">R</div>
 
@@ -242,15 +257,157 @@ export default function DashboardPage() {
             {live ? "● Live" : "○ Connecting"}
           </span>
 
-          <div>
-            <strong>{user.name}</strong>
+          <div className="relative">
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="
+  flex
+  items-center
+  gap-3
+  rounded-full
+  border
+  border-slate-200
+  bg-white
+  px-4
+  py-2
+  shadow-sm
+  hover:bg-slate-50
+  "
+            >
+              <div
+                className="
+ w-10
+ h-10
+ rounded-full
+ bg-emerald-600
+ text-white
+ flex
+ items-center
+ justify-center
+ font-bold
+ "
+              >
+                {user.name.charAt(0)}
+              </div>
 
-            <span>{user.role}</span>
+              <div className="text-left">
+                <p
+                  className="
+font-semibold
+text-slate-900
+"
+                >
+                  {user.name}
+                </p>
+
+                <p
+                  className="
+text-xs
+text-slate-500
+capitalize
+"
+                >
+                  {user.role}
+                </p>
+              </div>
+
+              <span>⌄</span>
+            </button>
+
+            {profileMenuOpen && (
+              <div
+                className="
+    absolute
+    right-0
+    top-full
+    mt-3
+    w-64
+    rounded-2xl
+    bg-white
+    border
+    border-slate-200
+    shadow-xl
+    p-3
+    z-50
+    "
+              >
+                <div
+                  className="
+      px-4
+      py-3
+      border-b
+      border-slate-100
+      "
+                >
+                  <p
+                    className="
+        font-bold
+        text-slate-900
+        "
+                  >
+                    {user.name}
+                  </p>
+
+                  <p
+                    className="
+        text-sm
+        text-slate-500
+        capitalize
+        "
+                  >
+                    {user.role}
+                  </p>
+                </div>
+
+                <button
+                  className="
+      w-full
+      text-left
+      px-4
+      py-3
+      rounded-xl
+      hover:bg-slate-100
+      text-slate-700
+      font-medium
+      "
+                  onClick={() => navigate("/profile")}
+                >
+                  Profile
+                </button>
+
+                <button
+                  className="
+      w-full
+      text-left
+      px-4
+      py-3
+      rounded-xl
+      hover:bg-slate-100
+      text-slate-700
+      font-medium
+      "
+                >
+                  Settings
+                </button>
+
+                <button
+                  className="
+      w-full
+      text-left
+      px-4
+      py-3
+      rounded-xl
+      hover:bg-red-50
+      text-red-600
+      font-medium
+      "
+                  onClick={logout}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
-
-          <button className="secondary-button" onClick={logout}>
-            Sign out
-          </button>
         </div>
       </header>
 
@@ -264,7 +421,52 @@ export default function DashboardPage() {
             Monitor and coordinate deliveries in real time.
           </p>
         </header>
+        {user.role === "retailer" && (
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Business Profile</h2>
 
+                <p className="muted">
+                  Share this code with your dispatchers and riders.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3>{user.business_name ?? "Your Business"}</h3>
+
+              <p className="muted">Business Code</p>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  marginTop: "8px",
+                }}
+              >
+                <strong
+                  style={{
+                    fontSize: "1.4rem",
+                    letterSpacing: "2px",
+                  }}
+                >
+                  {user.business_code ?? "Unavailable"}
+                </strong>
+
+                {user.business_code && (
+                  <button
+                    className="secondary-button"
+                    onClick={copyBusinessCode}
+                  >
+                    {copiedCode ? "Copied" : "Copy Code"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
         <OrderStatsCards
           stats={dashboardStats}
           selected={selectedStatus}

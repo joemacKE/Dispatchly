@@ -5,10 +5,18 @@ export type UserRole =
 
 export type AuthUser = {
   id: string;
+
   business_id: string;
+
   name: string;
+
   phone?: string;
+
   role: UserRole;
+
+  business_name?: string;
+
+  business_code?: string;
 };
 
 export type LoginResponse = {

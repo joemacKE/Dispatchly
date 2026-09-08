@@ -1,50 +1,38 @@
 import { useEffect } from "react";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 
 export default function AuthNavigationGuard() {
-  const { token, user, logout } = useAuth();
+  const { token } = useAuth();
 
   const location = useLocation();
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    if (!token || !user) {
+    /*
+      Only protect authenticated sessions.
+      Browser navigation inside the app
+      should remain normal.
+    */
+
+    if (!token) {
       return;
     }
 
     /*
-     * Replace current history entry
-     * so browser navigation is controlled
-     */
+      Replace history state so refresh/back
+      does not accidentally create stale entries.
+    */
 
-    window.history.pushState(null, "", window.location.href);
-
-    function handlePopState() {
-      const confirmLogout = window.confirm(
-        "Leaving Dispatchly will log you out. Continue?",
-      );
-
-      if (confirmLogout) {
-        logout();
-
-        navigate("/", {
-          replace: true,
-        });
-      } else {
-        window.history.pushState(null, "", window.location.href);
-      }
-    }
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [token, user, logout, navigate, location.pathname]);
+    window.history.replaceState(
+      {
+        authenticated: true,
+      },
+      "",
+      window.location.href,
+    );
+  }, [token, location.pathname]);
 
   return null;
 }
