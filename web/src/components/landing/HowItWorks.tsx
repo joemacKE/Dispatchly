@@ -42,6 +42,7 @@ export default function HowItWorks() {
 
   return (
     <section
+      id="workflow"
       className="
 py-28
 bg-white

@@ -11,6 +11,7 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 export default function Footer() {
   return (
     <footer
+      id="contact"
       className="
 bg-[#071A17]
 text-white

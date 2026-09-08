@@ -5,6 +5,7 @@ import ProblemVisual from "./ProblemVisual";
 export default function ProblemSection() {
   return (
     <section
+      id="problem"
       className="
 relative
 bg-slate-50

@@ -80,6 +80,7 @@ export default function FeaturesSection() {
 
   return (
     <section
+      id="features"
       className="
 py-28
 bg-slate-50

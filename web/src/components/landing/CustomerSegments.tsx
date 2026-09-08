@@ -68,6 +68,7 @@ export default function CustomerSegments() {
 
   return (
     <section
+      id="customers"
       className="
 py-28
 bg-white

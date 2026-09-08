@@ -7,6 +7,7 @@ import { faArrowRight, faPlay } from "@fortawesome/free-solid-svg-icons";
 export default function Hero() {
   return (
     <section
+      id="home"
       className="
 relative
 min-h-screen

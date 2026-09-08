@@ -37,6 +37,7 @@ export default function SolutionSection() {
 
   return (
     <section
+      id="solution"
       className="
 bg-[#071A17]
 py-28

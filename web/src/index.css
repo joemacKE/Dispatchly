@@ -1997,6 +1997,6 @@ letter-spacing:-1px;
   line-height: 1.6;
 
 }
-
-
-
+html {
+  scroll-behavior: smooth;
+}

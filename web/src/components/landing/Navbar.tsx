@@ -4,6 +4,38 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
+const navLinks = [
+  {
+    name: "Home",
+    href: "#home",
+  },
+
+  {
+    name: "Problem",
+    href: "#problem",
+  },
+
+  {
+    name: "Solution",
+    href: "#solution",
+  },
+
+  {
+    name: "How It Works",
+    href: "#workflow",
+  },
+
+  {
+    name: "Features",
+    href: "#features",
+  },
+
+  {
+    name: "Contact",
+    href: "#contact",
+  },
+];
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -31,13 +63,13 @@ export default function Navbar() {
         ${
           scrolled
             ? `
-          bg-white/90
-          backdrop-blur-xl
-          shadow-sm
-          `
+              bg-white/90
+              backdrop-blur-xl
+              shadow-sm
+            `
             : `
-          bg-transparent
-          `
+              bg-transparent
+            `
         }
 
       `}
@@ -55,31 +87,26 @@ export default function Navbar() {
       >
         {/* Logo */}
 
-        <div
+        <a
+          href="#home"
           className="
-          flex
-          items-center
-          gap-3
+            flex
+            items-center
+            gap-3
           "
         >
           <div
-            className={`
+            className="
               w-10
               h-10
               rounded-xl
+              bg-emerald-500
+              text-white
               flex
               items-center
               justify-center
               font-black
-              transition
-
-              ${
-                scrolled
-                  ? "bg-emerald-500 text-white"
-                  : "bg-emerald-500 text-white"
-              }
-
-            `}
+            "
           >
             D
           </div>
@@ -96,9 +123,9 @@ export default function Navbar() {
           >
             Dispatchly
           </span>
-        </div>
+        </a>
 
-        {/* Links */}
+        {/* Navigation */}
 
         <div
           className={`
@@ -112,24 +139,31 @@ export default function Navbar() {
 
           `}
         >
-          <a>Solutions</a>
-
-          <a>Features</a>
-
-          <a>How it Works</a>
-
-          <a>Resources</a>
+          {navLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              className="
+                  hover:text-emerald-500
+                  transition
+                "
+            >
+              {link.name}
+            </a>
+          ))}
         </div>
 
         {/* Actions */}
 
         <div
           className="
-          flex
-          items-center
-          gap-5
+            flex
+            items-center
+            gap-5
           "
         >
+          {/* Login */}
+
           <button
             className={`
               hidden
@@ -139,10 +173,34 @@ export default function Navbar() {
 
               ${scrolled ? "text-slate-700" : "text-white"}
 
+              hover:text-emerald-500
+
             `}
           >
             Login
           </button>
+
+          {/* Register */}
+
+          <button
+            className="
+              hidden
+              md:block
+              border
+              border-emerald-500
+              text-emerald-600
+              px-5
+              py-3
+              rounded-full
+              font-semibold
+              hover:bg-emerald-50
+              transition
+            "
+          >
+            Register
+          </button>
+
+          {/* Demo */}
 
           <button
             className="
@@ -156,6 +214,7 @@ export default function Navbar() {
               flex
               items-center
               gap-3
+              transition
             "
           >
             Request Demo
