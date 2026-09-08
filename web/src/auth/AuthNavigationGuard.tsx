@@ -12,23 +12,30 @@ export default function AuthNavigationGuard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!token || !user) {
+      return;
+    }
+
+    /*
+     * Replace current history entry
+     * so browser navigation is controlled
+     */
+
+    window.history.pushState(null, "", window.location.href);
+
     function handlePopState() {
-      if (token && user && location.pathname !== "/") {
-        const confirmLogout = window.confirm(
-          "You are leaving Dispatchly. Do you want to logout?",
-        );
+      const confirmLogout = window.confirm(
+        "Leaving Dispatchly will log you out. Continue?",
+      );
 
-        if (confirmLogout) {
-          logout();
+      if (confirmLogout) {
+        logout();
 
-          navigate("/", {
-            replace: true,
-          });
-        } else {
-          navigate(location.pathname, {
-            replace: true,
-          });
-        }
+        navigate("/", {
+          replace: true,
+        });
+      } else {
+        window.history.pushState(null, "", window.location.href);
       }
     }
 
@@ -37,7 +44,7 @@ export default function AuthNavigationGuard() {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [token, user, location.pathname, logout, navigate]);
+  }, [token, user, logout, navigate, location.pathname]);
 
   return null;
 }

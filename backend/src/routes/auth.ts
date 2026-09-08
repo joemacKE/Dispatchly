@@ -5,16 +5,73 @@ import { z } from "zod";
 import { db } from "../config/db";
 
 
+async function findBusinessByCode(
+  code: string
+) {
+
+  const result =
+    await db.query(
+      `
+      SELECT
+        id,
+        name,
+        business_code
+      FROM businesses
+      WHERE business_code = $1
+      LIMIT 1
+      `,
+      [
+        code.toUpperCase()
+      ]
+    );
+
+
+  return result.rows[0] ?? null;
+
+}
+
+
+
+function generateBusinessCode(
+  name:string
+){
+
+  const prefix =
+    name
+      .replace(
+        /[^a-zA-Z]/g,
+        ""
+      )
+      .substring(0,4)
+      .toUpperCase();
+
+
+  const number =
+    Math.floor(
+      10000 +
+      Math.random() * 90000
+    );
+
+
+  return `${prefix}-${number}`;
+
+}
+
+
+
 const loginSchema =
   z.object({
+
     phone:
       z.string()
-        .trim()
-        .min(7),
+      .trim()
+      .min(7),
+
 
     password:
       z.string()
-        .min(1),
+      .min(1),
+
   });
 
 
@@ -30,10 +87,12 @@ const registerSchema =
       ]),
 
 
-    business_id:
+    business_code:
       z.string()
-        .uuid()
-        .optional(),
+      .trim()
+      .min(3)
+      .optional(),
+
 
 
     business:
@@ -41,8 +100,9 @@ const registerSchema =
 
         name:
           z.string()
-            .trim()
-            .min(2),
+          .trim()
+          .min(2),
+
 
         type:
           z.enum([
@@ -52,15 +112,17 @@ const registerSchema =
             "other",
           ]),
 
+
         address:
           z.string()
-            .trim()
-            .min(2),
+          .trim()
+          .min(2),
+
 
         phone:
           z.string()
-            .trim()
-            .min(7),
+          .trim()
+          .min(7),
 
       })
       .optional(),
@@ -69,19 +131,21 @@ const registerSchema =
 
     name:
       z.string()
-        .trim()
-        .min(2),
+      .trim()
+      .min(2),
+
 
 
     phone:
       z.string()
-        .trim()
-        .min(7),
+      .trim()
+      .min(7),
+
 
 
     password:
       z.string()
-        .min(8),
+      .min(8),
 
   });
 
@@ -90,607 +154,705 @@ const registerSchema =
 
 export default async function authRoutes(
   app: FastifyInstance
-) {
+){
 
 
 
-  /*
-  ==========================================================
-  LOGIN
-  ==========================================================
-  */
 
+/*
+==========================================================
+LOGIN
+==========================================================
+*/
 
-  app.post(
-    "/auth/login",
-    async (
-      request,
-      reply
-    ) => {
 
+app.post(
+"/auth/login",
 
-      const parsedBody =
-        loginSchema.safeParse(
-          request.body
-        );
+async(
+request,
+reply
+)=>{
 
 
+const parsed =
+loginSchema.safeParse(
+request.body
+);
 
-      if(!parsedBody.success){
 
-        return reply
-          .status(422)
-          .send({
 
-            success:false,
+if(!parsed.success){
 
-            error:{
-              code:
-                "VALIDATION_ERROR",
+return reply
+.status(422)
+.send({
 
-              message:
-                "Phone and password are required",
+success:false,
 
-            }
+error:{
+code:
+"VALIDATION_ERROR",
 
-          });
+message:
+"Phone and password are required"
 
-      }
+}
 
+});
 
+}
 
-      const {
-        phone,
-        password,
 
-      } = parsedBody.data;
 
+const {
+phone,
+password
+} =
+parsed.data;
 
 
-      const result =
-        await db.query(
 
-          `
-          SELECT
-            id,
-            business_id,
-            name,
-            phone,
-            password_hash,
-            role,
-            is_active
+const result =
+await db.query(
 
-          FROM users
+`
+SELECT
+users.id,
+users.business_id,
+users.name,
+users.phone,
+users.password_hash,
+users.role,
+users.is_active,
 
-          WHERE phone=$1
+businesses.name AS business_name,
+businesses.business_code
 
-          LIMIT 1
+FROM users
 
-          `,
+JOIN businesses
+ON businesses.id = users.business_id
 
-          [
-            phone
-          ]
+WHERE users.phone=$1
 
-        );
+LIMIT 1
+`,
 
+[
+phone
+]
 
+);
 
-      if(result.rows.length===0){
 
-        return reply
-          .status(401)
-          .send({
 
-            success:false,
+if(!result.rows.length){
 
-            error:{
-              code:
-                "INVALID_CREDENTIALS",
+return reply
+.status(401)
+.send({
 
-              message:
-                "Invalid phone or password"
+success:false,
 
-            }
+error:{
+code:
+"INVALID_CREDENTIALS",
 
-          });
+message:
+"Invalid phone or password"
 
-      }
+}
 
+});
 
+}
 
-      const user =
-        result.rows[0];
 
 
+const user =
+result.rows[0];
 
-      if(!user.is_active){
 
-        return reply
-          .status(403)
-          .send({
 
-            success:false,
+if(!user.is_active){
 
-            error:{
-              code:
-                "ACCOUNT_DISABLED",
+return reply
+.status(403)
+.send({
 
-              message:
-                "Account disabled"
+success:false,
 
-            }
+error:{
+code:
+"ACCOUNT_DISABLED",
 
-          });
+message:
+"Account disabled"
 
-      }
+}
 
+});
 
+}
 
 
-      const passwordMatches =
-        await bcrypt.compare(
-          password,
-          user.password_hash
-        );
 
+const passwordMatches =
+await bcrypt.compare(
+password,
+user.password_hash
+);
 
 
-      if(!passwordMatches){
 
-        return reply
-          .status(401)
-          .send({
+if(!passwordMatches){
 
-            success:false,
+return reply
+.status(401)
+.send({
 
-            error:{
-              code:
-                "INVALID_CREDENTIALS",
+success:false,
 
-              message:
-                "Invalid phone or password"
+error:{
+code:
+"INVALID_CREDENTIALS",
 
-            }
+message:
+"Invalid phone or password"
 
-          });
+}
 
-      }
+});
 
+}
 
 
 
-      const accessToken =
-        app.jwt.sign(
 
-          {
+const token =
+app.jwt.sign(
 
-            sub:
-              user.id,
+{
 
-            business_id:
-              user.business_id,
+sub:
+user.id,
 
-            role:
-              user.role,
+business_id:
+user.business_id,
 
-            name:
-              user.name,
+role:
+user.role,
 
-          },
+name:
+user.name,
 
-          {
+},
 
-            expiresIn:
-              "15m",
+{
+expiresIn:"15m"
+}
 
-          }
+);
 
-        );
 
 
+return reply.send({
 
+success:true,
 
-      return reply.send({
+access_token:
+token,
 
-        success:true,
+token_type:
+"Bearer",
 
-        access_token:
-          accessToken,
+expires_in:
+900,
 
-        token_type:
-          "Bearer",
 
-        expires_in:
-          900,
+user:{
 
+id:
+user.id,
 
-        user:{
+business_id:
+user.business_id,
 
-          id:
-            user.id,
+business_name:
+user.business_name,
 
-          business_id:
-            user.business_id,
+business_code:
+user.business_code,
 
-          name:
-            user.name,
+name:
+user.name,
 
-          phone:
-            user.phone,
+phone:
+user.phone,
 
-          role:
-            user.role,
+role:
+user.role,
 
-        }
+}
 
-      });
+});
 
 
-    }
+}
 
-  );
+);
 
 
 
 
 
 
-  /*
-  ==========================================================
-  REGISTER
-  ==========================================================
-  */
+/*
+==========================================================
+REGISTER
+==========================================================
+*/
 
 
-  app.post(
-    "/auth/register",
+app.post(
+"/auth/register",
 
-    async(
-      request,
-      reply
-    )=>{
+async(
+request,
+reply
+)=>{
 
 
-      const parsed =
-        registerSchema.safeParse(
-          request.body
-        );
+const parsed =
+registerSchema.safeParse(
+request.body
+);
 
 
 
-      if(!parsed.success){
+if(!parsed.success){
 
-        return reply
-          .status(422)
-          .send({
+return reply
+.status(422)
+.send({
 
-            success:false,
+success:false,
 
-            error:{
-              code:
-                "VALIDATION_ERROR",
+error:{
+code:
+"VALIDATION_ERROR",
 
-              message:
-                "Invalid registration details"
+message:
+"Invalid registration details"
 
-            }
+}
 
-          });
+});
 
-      }
+}
 
 
 
-      const data =
-        parsed.data;
+const data =
+parsed.data;
 
 
 
-      const client =
-        await db.connect();
+const client =
+await db.connect();
 
 
 
-      try{
+try{
 
 
-        await client.query(
-          "BEGIN"
-        );
+await client.query(
+"BEGIN"
+);
 
 
 
-        let businessId =
-          data.business_id;
+let businessId:string;
 
 
 
-        /*
-        Retailers create businesses
-        */
+let business:
+{
+name:string;
+business_code:string;
+}
+| null = null;
 
-        if(data.role==="retailer"){
 
 
-          if(!data.business){
 
-            throw new Error(
-              "Business information required"
-            );
+/*
+==========================================================
+RETAILER CREATES BUSINESS
+==========================================================
+*/
 
-          }
 
+if(data.role==="retailer"){
 
 
-          const businessResult =
-            await client.query(
 
-              `
-              INSERT INTO businesses
-              (
-                name,
-                type,
-                address,
-                phone
-              )
+if(!data.business){
 
-              VALUES
-              ($1,$2,$3,$4)
+return reply
+.status(400)
+.send({
 
-              RETURNING id
+success:false,
 
-              `,
+error:{
+code:
+"BUSINESS_REQUIRED",
 
-              [
+message:
+"Business details required"
 
-                data.business.name,
+}
 
-                data.business.type,
+});
 
-                data.business.address,
+}
 
-                data.business.phone
 
-              ]
 
-            );
+const businessCode =
+generateBusinessCode(
+data.business.name
+);
 
 
 
-          businessId =
-            businessResult.rows[0].id;
+const result =
+await client.query(
 
+`
+INSERT INTO businesses
+(
+business_code,
+name,
+type,
+address,
+phone
+)
 
-        }
+VALUES
+($1,$2,$3,$4,$5)
 
+RETURNING
+id,
+name,
+business_code
+`,
 
+[
 
+businessCode,
 
-        /*
-        Riders and dispatchers
-        must have business
-        */
+data.business.name,
 
-        if(!businessId){
+data.business.type,
 
-          throw new Error(
-            "Business ID required"
-          );
+data.business.address,
 
-        }
+data.business.phone
 
+]
 
+);
 
 
-        const existingUser =
-          await client.query(
 
-            `
-            SELECT id
-            FROM users
-            WHERE phone=$1
+businessId =
+result.rows[0].id;
 
-            `,
+business =
+result.rows[0];
 
-            [
-              data.phone
-            ]
 
-          );
+}
 
 
 
-        if(existingUser.rows.length){
 
-          return reply
-            .status(409)
-            .send({
 
-              success:false,
+/*
+==========================================================
+DISPATCHER / RIDER JOIN BUSINESS
+==========================================================
+*/
 
-              error:{
-                code:
-                  "PHONE_EXISTS",
 
-                message:
-                  "Phone already registered"
+else{
 
-              }
 
-            });
+if(!data.business_code){
 
-        }
+return reply
+.status(400)
+.send({
 
+success:false,
 
+error:{
+code:
+"BUSINESS_CODE_REQUIRED",
 
+message:
+"Business code is required"
 
+}
 
-        const passwordHash =
-          await bcrypt.hash(
-            data.password,
-            12
-          );
+});
 
+}
 
 
 
-        const userResult =
-          await client.query(
+const foundBusiness =
+await findBusinessByCode(
+data.business_code
+);
 
-            `
-            INSERT INTO users
-            (
-              business_id,
-              name,
-              phone,
-              password_hash,
-              role
-            )
 
-            VALUES
-            ($1,$2,$3,$4,$5::user_role)
 
-            RETURNING
+if(!foundBusiness){
 
-            id,
-            business_id,
-            name,
-            phone,
-            role
+return reply
+.status(404)
+.send({
 
-            `,
+success:false,
 
-            [
+error:{
+code:
+"BUSINESS_NOT_FOUND",
 
-              businessId,
+message:
+"Invalid business code"
 
-              data.name,
+}
 
-              data.phone,
+});
 
-              passwordHash,
+}
 
-              data.role
 
-            ]
 
-          );
+businessId =
+foundBusiness.id;
 
+business =
+foundBusiness;
 
 
+}
 
 
-        await client.query(
-          "COMMIT"
-        );
 
 
+const existing =
+await client.query(
 
-        const user =
-          userResult.rows[0];
+`
+SELECT id
+FROM users
+WHERE phone=$1
+`,
 
+[
+data.phone
+]
 
+);
 
-        const token =
-          app.jwt.sign(
 
-            {
 
-              sub:
-                user.id,
+if(existing.rows.length){
 
-              business_id:
-                user.business_id,
+return reply
+.status(409)
+.send({
 
-              role:
-                user.role,
+success:false,
 
-              name:
-                user.name,
+error:{
+code:
+"PHONE_EXISTS",
 
-            },
+message:
+"Phone already registered"
 
-            {
+}
 
-              expiresIn:
-                "15m",
+});
 
-            }
+}
 
-          );
 
 
 
-        return reply.send({
+const passwordHash =
+await bcrypt.hash(
+data.password,
+12
+);
 
-          success:true,
 
-          access_token:
-            token,
 
+const userResult =
+await client.query(
 
-          token_type:
-            "Bearer",
+`
+INSERT INTO users
+(
+business_id,
+name,
+phone,
+password_hash,
+role
+)
 
+VALUES
+($1,$2,$3,$4,$5::user_role)
 
-          expires_in:
-            900,
+RETURNING
+id,
+business_id,
+name,
+phone,
+role
+`,
 
+[
 
-          user
+businessId,
 
-        });
+data.name,
 
+data.phone,
 
+passwordHash,
 
-      }catch(error){
+data.role
 
+]
 
+);
 
-        await client.query(
-          "ROLLBACK"
-        );
 
 
+await client.query(
+"COMMIT"
+);
 
-        request.log.error(
-          error
-        );
 
 
+const user =
+userResult.rows[0];
 
-        return reply
-          .status(500)
-          .send({
 
-            success:false,
 
-            error:{
-              code:
-                "REGISTRATION_FAILED",
+const token =
+app.jwt.sign(
 
-              message:
-                "Unable to create account"
+{
 
-            }
+sub:
+user.id,
 
-          });
+business_id:
+user.business_id,
 
+role:
+user.role,
 
+name:
+user.name,
 
-      }finally{
+},
 
+{
+expiresIn:"15m"
+}
 
-        client.release();
+);
 
 
-      }
 
+return reply.send({
 
-    }
+success:true,
 
-  );
+access_token:
+token,
+
+token_type:
+"Bearer",
+
+expires_in:
+900,
+
+
+user,
+
+business
+
+});
+
+
+
+}
+catch(error){
+
+
+await client.query(
+"ROLLBACK"
+);
+
+
+request.log.error(
+error
+);
+
+
+
+return reply
+.status(500)
+.send({
+
+success:false,
+
+error:{
+code:
+"REGISTRATION_FAILED",
+
+message:
+"Unable to create account"
+
+}
+
+});
+
+
+}
+finally{
+
+
+client.release();
+
+
+}
+
+
+}
+
+);
 
 
 }

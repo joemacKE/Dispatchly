@@ -15,7 +15,6 @@ import { useAuth } from "../../auth/AuthContext";
 
 type Props = {
   open: boolean;
-
   onClose: () => void;
 };
 
@@ -34,7 +33,7 @@ export default function RegisterModal({ open, onClose }: Props) {
 
   const [password, setPassword] = useState("");
 
-  const [businessId, setBusinessId] = useState("");
+  const [businessCode, setBusinessCode] = useState("");
 
   const [businessName, setBusinessName] = useState("");
 
@@ -94,12 +93,12 @@ export default function RegisterModal({ open, onClose }: Props) {
               },
             }
           : {
-              business_id: businessId,
+              business_code: businessCode.trim(),
             }),
 
-        name,
+        name: name.trim(),
 
-        phone,
+        phone: phone.trim(),
 
         password,
       });
@@ -158,11 +157,7 @@ hover:text-slate-700
           <FontAwesomeIcon icon={faXmark} />
         </button>
 
-        <div
-          className="
-text-center
-"
-        >
+        <div className="text-center">
           <div
             className="
 mx-auto
@@ -215,10 +210,12 @@ gap-3
               id: "retailer",
               label: "Retailer",
             },
+
             {
               id: "dispatcher",
               label: "Dispatcher",
             },
+
             {
               id: "rider",
               label: "Rider",
@@ -232,7 +229,6 @@ gap-3
 rounded-xl
 p-3
 font-semibold
-transition
 
 ${
   role === item.id ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"
@@ -268,11 +264,7 @@ space-y-4
             className="input"
           />
 
-          <div
-            className="
-relative
-"
-          >
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               value={password}
@@ -338,9 +330,9 @@ text-slate-400
             </>
           ) : (
             <input
-              value={businessId}
-              onChange={(e) => setBusinessId(e.target.value)}
-              placeholder="Business ID"
+              value={businessCode}
+              onChange={(e) => setBusinessCode(e.target.value)}
+              placeholder="Business code e.g. MUGA-42946"
               required
               className="input"
             />
