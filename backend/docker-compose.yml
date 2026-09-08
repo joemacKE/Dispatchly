@@ -76,9 +76,20 @@ services:
       API_PUBLIC_URL: http://localhost:8000
 
       TRUST_PROXY: "false"
+    
+    volumes:
+
+      - ./src:/app/src
+
+      - ./package.json:/app/package.json
+
+      - ./package-lock.json:/app/package-lock.json
+
+      - ./tsconfig.json:/app/tsconfig.json
 
     ports:
       - "8000:3000"
+    
 
     restart: unless-stopped
 
