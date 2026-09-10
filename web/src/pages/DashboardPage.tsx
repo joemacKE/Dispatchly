@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { faRotate } from "@fortawesome/free-solid-svg-icons";
 import { Navigate } from "react-router-dom";
 
 import {
@@ -18,6 +20,7 @@ import RetailerStatsCards from "../components/retailer/RetailerStatsCards";
 import RetailerPerformanceCard from "../components/retailer/RetailerPerformanceCard";
 import RetailerTrendCard from "../components/retailer/RetailerTrendCard";
 import RetailerLocationsCard from "../components/retailer/RetailerLocationsCard";
+import RetailerAnalyticsFilter from "../components/retailer/RetailerAnalyticsFilter";
 
 import OrdersTable from "../components/dashboard/OrdersTable";
 
@@ -59,6 +62,9 @@ export default function DashboardPage() {
   });
 
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<
+    "today" | "7days" | "30days" | "all"
+  >("7days");
 
   const [error, setError] = useState("");
 
@@ -102,6 +108,29 @@ export default function DashboardPage() {
       );
     }
   }, [token]);
+  const analyticsOrders = allOrders.filter((order) => {
+    if (!order.created_at) {
+      return false;
+    }
+
+    if (analyticsPeriod === "all") {
+      return true;
+    }
+
+    const created = new Date(order.created_at);
+
+    const now = new Date();
+
+    if (analyticsPeriod === "today") {
+      return created.toDateString() === now.toDateString();
+    }
+
+    const days = analyticsPeriod === "7days" ? 7 : 30;
+
+    const difference = now.getTime() - created.getTime();
+
+    return difference <= days * 24 * 60 * 60 * 1000;
+  });
 
   const loadDashboardStats = useCallback(async () => {
     if (!token) {
@@ -311,27 +340,33 @@ export default function DashboardPage() {
               </div>
 
               <button
-                className="secondary-button"
+                className="secondary-button icon-button"
+                title="Refresh orders"
                 onClick={() => void loadOrders()}
               >
-                Refresh
+                <FontAwesomeIcon icon={faRotate} />
               </button>
             </div>
 
-            <OrdersTable
-              orders={orders}
-              onPickupQr={openPickupQr}
-              onDeliveryQr={openDeliveryQr}
-            />
+            <div className="orders-table-scroll">
+              <OrdersTable
+                orders={orders}
+                onPickupQr={openPickupQr}
+                onDeliveryQr={openDeliveryQr}
+              />
+            </div>
           </div>
         </section>
-
+        <RetailerAnalyticsFilter
+          period={analyticsPeriod}
+          onChange={setAnalyticsPeriod}
+        />
         <section className="retailer-intelligence-grid">
           <RetailerPerformanceCard stats={dashboardStats} />
 
-          <RetailerTrendCard orders={allOrders} />
+          <RetailerTrendCard orders={analyticsOrders} />
 
-          <RetailerLocationsCard orders={allOrders} />
+          <RetailerLocationsCard orders={analyticsOrders} />
         </section>
 
         {showQrModal && (
