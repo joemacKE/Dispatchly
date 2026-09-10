@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import { AuthProvider } from "./auth/AuthContext";
+import { NotificationProvider } from "./notifications/NotificationContext";
 import App from "./App";
 
 import "./index.css";
@@ -16,7 +17,9 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <BrowserRouter>
     <AuthProvider>
-      <App />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
     </AuthProvider>
   </BrowserRouter>,
 );

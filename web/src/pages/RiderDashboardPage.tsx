@@ -13,6 +13,9 @@ import {
 import { useAuth } from "../auth/AuthContext";
 
 import Navbar from "../components/layout/Navbar";
+import { useNotifications } from "../notifications/NotificationContext";
+
+import { buildNotification } from "../notifications/notificationHelpers";
 
 import RiderOrdersTable from "../components/rider/RiderOrdersTable";
 import RiderStatsCards from "../components/rider/RiderStatsCards";
@@ -60,6 +63,7 @@ function getLocation(): Promise<{
 
 export default function RiderDashboardPage() {
   const { token, user } = useAuth();
+  const { addNotification } = useNotifications();
 
   const riderId = user?.id || "unknown";
 
@@ -158,6 +162,12 @@ export default function RiderDashboardPage() {
         }
 
         if (message.type?.startsWith("delivery.")) {
+          const notification = buildNotification(message.type);
+
+          if (notification) {
+            addNotification(notification);
+          }
+
           void loadAllDeliveries();
         }
       } catch {

@@ -14,6 +14,9 @@ import {
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
+import { useNotifications } from "../notifications/NotificationContext";
+
+import { buildNotification } from "../notifications/notificationHelpers";
 
 import NewDeliveryForm from "../components/NewDeliveryForm";
 import RetailerStatsCards from "../components/retailer/RetailerStatsCards";
@@ -47,6 +50,8 @@ type DeliveryForm = {
 
 export default function DashboardPage() {
   const { token, user } = useAuth();
+
+  const { addNotification } = useNotifications();
 
   const [orders, setOrders] = useState<Delivery[]>([]);
 
@@ -163,7 +168,7 @@ export default function DashboardPage() {
     void loadAllOrders();
 
     void loadDashboardStats();
-  }, [loadOrders, loadAllOrders, loadDashboardStats]);
+  }, [token, loadOrders, loadDashboardStats, addNotification]);
   useEffect(() => {
     if (!token) {
       return;
@@ -192,9 +197,13 @@ export default function DashboardPage() {
         }
 
         if (message.type?.startsWith("delivery.")) {
-          void loadOrders();
+          const notification = buildNotification(message.type);
 
-          void loadAllOrders();
+          if (notification) {
+            addNotification(notification);
+          }
+
+          void loadOrders();
 
           void loadDashboardStats();
         }

@@ -4,66 +4,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faBell, faCheck } from "@fortawesome/free-solid-svg-icons";
 
-type NotificationItem = {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-};
+import { useNotifications } from "../../notifications/NotificationContext";
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "1",
-      title: "Delivery Assigned",
-      message: "A rider has been assigned to one of your deliveries.",
-      time: "2 min ago",
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Delivery Completed",
-      message: "A customer delivery has been completed successfully.",
-      time: "12 min ago",
-      read: false,
-    },
-    {
-      id: "3",
-      title: "Pickup Verified",
-      message: "A rider verified pickup and started the delivery.",
-      time: "25 min ago",
-      read: true,
-    },
-  ]);
-
-  const unreadCount = notifications.filter(
-    (notification) => !notification.read,
-  ).length;
-
-  function markAsRead(id: string) {
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id
-          ? {
-              ...notification,
-              read: true,
-            }
-          : notification,
-      ),
-    );
-  }
-
-  function markAllAsRead() {
-    setNotifications((current) =>
-      current.map((notification) => ({
-        ...notification,
-        read: true,
-      })),
-    );
-  }
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
 
   return (
     <div className="notification-center">

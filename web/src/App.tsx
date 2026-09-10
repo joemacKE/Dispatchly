@@ -9,7 +9,6 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import AuthNavigationGuard from "./auth/AuthNavigationGuard";
 import PublicRoute from "./auth/PublicationRoute";
 import ProfilePage from "./pages/ProfilePage";
-import LayoutTestPage from "./pages/LayoutTestPage";
 
 export default function App() {
   return (
@@ -19,7 +18,7 @@ export default function App() {
 
       <Routes>
         {/* Public landing page */}
-        <Route path="/layout-test" element={<LayoutTestPage />} />
+
         <Route
           path="/"
           element={

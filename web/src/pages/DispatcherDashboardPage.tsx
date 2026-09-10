@@ -11,6 +11,9 @@ import {
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
+import { useNotifications } from "../notifications/NotificationContext";
+
+import { buildNotification } from "../notifications/notificationHelpers";
 
 import DispatcherOrdersTable from "../components/dispatcher/DispatcherOrdersTable";
 
@@ -21,6 +24,7 @@ import type { Delivery, Rider } from "../types";
 
 export default function DispatcherDashboardPage() {
   const { token, user } = useAuth();
+  const { addNotification } = useNotifications();
 
   const [orders, setOrders] = useState<Delivery[]>([]);
 
@@ -126,16 +130,26 @@ export default function DispatcherDashboardPage() {
     };
 
     socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
+      try {
+        const message = JSON.parse(event.data);
 
-      if (message.type === "authentication.success") {
-        setLive(true);
-      }
+        if (message.type === "authentication.success") {
+          setLive(true);
+        }
 
-      if (message.type?.startsWith("delivery.")) {
-        void loadOrders();
+        if (message.type?.startsWith("delivery.")) {
+          const notification = buildNotification(message.type);
 
-        void loadStats();
+          if (notification) {
+            addNotification(notification);
+          }
+
+          void loadOrders();
+
+          void loadStats();
+        }
+      } catch {
+        console.error("Invalid websocket message");
       }
     };
 

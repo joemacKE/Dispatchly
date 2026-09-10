@@ -3369,3 +3369,53 @@ margin-bottom:10px;
 font-size:14px;
 
 }
+.notification-bell-button {
+
+  position: relative;
+
+  color: #dc2626;
+
+  font-size: 22px;
+
+}
+
+
+.notification-bell-button:hover {
+
+  color: #b91c1c;
+
+}
+
+
+
+.notification-badge {
+
+  position: absolute;
+
+  top: -6px;
+
+  right: -8px;
+
+  min-width: 20px;
+
+  height: 20px;
+
+  border-radius: 999px;
+
+  background: #16a34a;
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:0 5px;
+
+}
