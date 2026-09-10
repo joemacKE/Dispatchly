@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../auth/AuthContext";
+import getRoleHome from "../../auth/getRoleHome";
 
 type Props = {
   open: boolean;
@@ -56,17 +57,9 @@ export default function RegisterModal({ open, onClose }: Props) {
   }
 
   function redirectUser(userRole: Role) {
-    if (userRole === "rider") {
-      navigate("/rider");
-      return;
-    }
-
-    if (userRole === "dispatcher") {
-      navigate("/dispatcher");
-      return;
-    }
-
-    navigate("/dashboard");
+    navigate(getRoleHome(userRole), {
+      replace: true,
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

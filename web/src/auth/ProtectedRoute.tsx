@@ -4,6 +4,8 @@ import { Navigate } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 
+import getRoleHome from "./getRoleHome";
+
 type Props = {
   children: ReactNode;
 
@@ -42,18 +44,7 @@ export default function ProtectedRoute({
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return (
-      <Navigate
-        to={
-          user.role === "rider"
-            ? "/rider"
-            : user.role === "dispatcher"
-              ? "/dispatcher"
-              : "/dashboard"
-        }
-        replace
-      />
-    );
+    return <Navigate to={getRoleHome(user.role)} replace />;
   }
 
   return children;

@@ -2,6 +2,8 @@ import { Navigate } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 
+import getRoleHome from "./getRoleHome";
+
 export default function PublicRoute({
   children,
 }: {
@@ -10,18 +12,7 @@ export default function PublicRoute({
   const { token, user } = useAuth();
 
   if (token && user) {
-    return (
-      <Navigate
-        to={
-          user.role === "rider"
-            ? "/rider"
-            : user.role === "dispatcher"
-              ? "/dispatcher"
-              : "/dashboard"
-        }
-        replace
-      />
-    );
+    return <Navigate to={getRoleHome(user.role)} replace />;
   }
 
   return children;

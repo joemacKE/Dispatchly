@@ -8,6 +8,8 @@ import { faEye, faEyeSlash, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../auth/AuthContext";
 
+import getRoleHome from "../../auth/getRoleHome";
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -44,23 +46,7 @@ export default function LoginModal({ open, onClose }: Props) {
       return;
     }
 
-    if (user.role === "rider") {
-      navigate("/dashboard", {
-        replace: true,
-      });
-
-      return;
-    }
-
-    if (user.role === "dispatcher") {
-      navigate("/dashboard", {
-        replace: true,
-      });
-
-      return;
-    }
-
-    navigate("/dashboard", {
+    navigate(getRoleHome(user.role), {
       replace: true,
     });
   }
@@ -261,12 +247,12 @@ export default function LoginModal({ open, onClose }: Props) {
             <div
               role="alert"
               className="
-                  rounded-xl
-                  bg-red-50
-                  text-red-600
-                  p-3
-                  text-sm
-                "
+                rounded-xl
+                bg-red-50
+                text-red-600
+                p-3
+                text-sm
+              "
             >
               {error}
             </div>

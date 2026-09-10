@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/AuthContext";
 
+import NotificationBell from "./NotificationBell";
+
 type Props = {
   live?: boolean;
 };
@@ -27,9 +29,17 @@ export default function Navbar({ live = false }: Props) {
       </div>
 
       <div className="user-row">
+        {/* Live Connection Status */}
+
         <span className={live ? "live-pill online" : "live-pill"}>
           {live ? "● Live" : "○ Connecting"}
         </span>
+
+        {/* Notification Center */}
+
+        <NotificationBell />
+
+        {/* Profile Dropdown */}
 
         <div className="relative">
           <button
@@ -133,14 +143,14 @@ export default function Navbar({ live = false }: Props) {
 
               <button
                 className="
-  w-full
-  text-left
-  px-4
-  py-3
-  rounded-xl
-  hover:bg-red-50
-  text-red-600
-  "
+                  w-full
+                  text-left
+                  px-4
+                  py-3
+                  rounded-xl
+                  hover:bg-red-50
+                  text-red-600
+                  "
                 onClick={() => {
                   logout();
 
