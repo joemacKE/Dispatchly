@@ -14,19 +14,30 @@ import {
 import { useAuth } from "../auth/AuthContext";
 
 import NewDeliveryForm from "../components/NewDeliveryForm";
-import OrderStatsCards from "../components/dashboard/OrderStatsCards";
+import RetailerStatsCards from "../components/retailer/RetailerStatsCards";
+import RetailerPerformanceCard from "../components/retailer/RetailerPerformanceCard";
+import RetailerTrendCard from "../components/retailer/RetailerTrendCard";
+import RetailerLocationsCard from "../components/retailer/RetailerLocationsCard";
+
 import OrdersTable from "../components/dashboard/OrdersTable";
+
 import QrModal from "../components/QrModal";
+
 import Navbar from "../components/layout/Navbar";
 
 import type { Delivery } from "../types";
 
 type DeliveryForm = {
   customer_name: string;
+
   customer_phone: string;
+
   customer_address: string;
+
   item_description: string;
+
   payment_method: "prepaid" | "cash_on_delivery";
+
   payment_amount?: number;
 };
 
@@ -37,8 +48,11 @@ export default function DashboardPage() {
 
   const [dashboardStats, setDashboardStats] = useState({
     pending: 0,
+
     assigned: 0,
+
     in_transit: 0,
+
     delivered: 0,
   });
 
@@ -113,6 +127,7 @@ export default function DashboardPage() {
       socket.send(
         JSON.stringify({
           type: "auth",
+
           token,
         }),
       );
@@ -124,8 +139,6 @@ export default function DashboardPage() {
 
         if (message.type === "authentication.success") {
           setLive(true);
-
-          return;
         }
 
         if (message.type?.startsWith("delivery.")) {
@@ -180,19 +193,13 @@ export default function DashboardPage() {
       return;
     }
 
-    try {
-      const qr = await getPickupQr(token, order.id);
+    const qr = await getPickupQr(token, order.id);
 
-      setQrValue(qr);
+    setQrValue(qr);
 
-      setQrTitle("Pickup QR Code");
+    setQrTitle("Pickup QR Code");
 
-      setShowQrModal(true);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Unable to generate pickup QR",
-      );
-    }
+    setShowQrModal(true);
   }
 
   async function openDeliveryQr(order: Delivery) {
@@ -200,21 +207,13 @@ export default function DashboardPage() {
       return;
     }
 
-    try {
-      const qr = await getDeliveryQr(token, order.id);
+    const qr = await getDeliveryQr(token, order.id);
 
-      setQrValue(qr);
+    setQrValue(qr);
 
-      setQrTitle("Delivery QR Code");
+    setQrTitle("Delivery QR Code");
 
-      setShowQrModal(true);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to generate delivery QR",
-      );
-    }
+    setShowQrModal(true);
   }
 
   return (
@@ -222,17 +221,45 @@ export default function DashboardPage() {
       <Navbar live={live} />
 
       <main className="dashboard">
-        <header className="page-heading">
-          <p className="eyebrow">Operations</p>
+        <section className="retailer-header">
+          <div className="retailer-welcome">
+            <div className="retailer-avatar">
+              <span>R</span>
+            </div>
 
-          <h1>Delivery Dashboard</h1>
+            <div>
+              <p className="eyebrow">RETAILER DASHBOARD</p>
 
-          <p className="muted">
-            Monitor and coordinate deliveries in real time.
-          </p>
-        </header>
+              <h1>Good afternoon, {user.name}</h1>
 
-        <OrderStatsCards
+              <p className="muted">
+                Manage your deliveries, customers and business performance.
+              </p>
+            </div>
+          </div>
+
+          <div className="business-summary">
+            <div>
+              <span>Business Code</span>
+
+              <strong>{user.business_code ?? "N/A"}</strong>
+            </div>
+
+            <div>
+              <span>Business</span>
+
+              <strong>{user.business_name ?? "Your Business"}</strong>
+            </div>
+
+            <div>
+              <span>Status</span>
+
+              <strong className="active-status">Active</strong>
+            </div>
+          </div>
+        </section>
+
+        <RetailerStatsCards
           stats={dashboardStats}
           selected={selectedStatus}
           onSelect={setSelectedStatus}
@@ -240,21 +267,23 @@ export default function DashboardPage() {
 
         {error && <div className="error-box">{error}</div>}
 
-        <section className="dashboard-grid">
-          <NewDeliveryForm onSubmit={addDelivery} />
+        <section className="retailer-main-grid">
+          <div className="retailer-section-card">
+            <div className="section-heading">
+              <h2>Create New Delivery</h2>
 
-          <div className="panel">
+              <p>Send a new delivery request to Dispatchly.</p>
+            </div>
+
+            <NewDeliveryForm onSubmit={addDelivery} />
+          </div>
+
+          <div className="retailer-section-card orders-panel">
             <div className="panel-heading">
               <div>
-                <h2>
-                  {selectedStatus
-                    ? selectedStatus
-                        .replaceAll("_", " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase())
-                    : "All Orders"}
-                </h2>
+                <h2>Recent Deliveries</h2>
 
-                <p className="muted">{orders.length} orders</p>
+                <p className="muted">{orders.length} active orders</p>
               </div>
 
               <button
@@ -265,18 +294,20 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            {orders.length === 0 ? (
-              <div className="empty-state">No orders found.</div>
-            ) : (
-              <div className="orders-table-wrapper">
-                <OrdersTable
-                  orders={orders}
-                  onPickupQr={openPickupQr}
-                  onDeliveryQr={openDeliveryQr}
-                />
-              </div>
-            )}
+            <OrdersTable
+              orders={orders}
+              onPickupQr={openPickupQr}
+              onDeliveryQr={openDeliveryQr}
+            />
           </div>
+        </section>
+
+        <section className="retailer-intelligence-grid">
+          <RetailerPerformanceCard stats={dashboardStats} />
+
+          <RetailerTrendCard orders={orders} />
+
+          <RetailerLocationsCard orders={orders} />
         </section>
 
         {showQrModal && (
@@ -285,6 +316,7 @@ export default function DashboardPage() {
             qrValue={qrValue}
             onClose={() => {
               setShowQrModal(false);
+
               setQrValue("");
             }}
           />
