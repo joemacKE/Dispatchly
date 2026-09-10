@@ -46,6 +46,8 @@ export default function DashboardPage() {
 
   const [orders, setOrders] = useState<Delivery[]>([]);
 
+  const [allOrders, setAllOrders] = useState<Delivery[]>([]);
+
   const [dashboardStats, setDashboardStats] = useState({
     pending: 0,
 
@@ -83,6 +85,23 @@ export default function DashboardPage() {
       );
     }
   }, [token, selectedStatus]);
+  const loadAllOrders = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const result = await getDashboardOrders(token);
+
+      setAllOrders(result.orders);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load analytics data",
+      );
+    }
+  }, [token]);
 
   const loadDashboardStats = useCallback(async () => {
     if (!token) {
@@ -111,9 +130,10 @@ export default function DashboardPage() {
   useEffect(() => {
     void loadOrders();
 
-    void loadDashboardStats();
-  }, [loadOrders, loadDashboardStats]);
+    void loadAllOrders();
 
+    void loadDashboardStats();
+  }, [loadOrders, loadAllOrders, loadDashboardStats]);
   useEffect(() => {
     if (!token) {
       return;
@@ -143,6 +163,8 @@ export default function DashboardPage() {
 
         if (message.type?.startsWith("delivery.")) {
           void loadOrders();
+
+          void loadAllOrders();
 
           void loadDashboardStats();
         }
@@ -179,6 +201,8 @@ export default function DashboardPage() {
       await createDelivery(token, data);
 
       await loadOrders();
+
+      await loadAllOrders();
 
       await loadDashboardStats();
     } catch (error) {
@@ -305,9 +329,9 @@ export default function DashboardPage() {
         <section className="retailer-intelligence-grid">
           <RetailerPerformanceCard stats={dashboardStats} />
 
-          <RetailerTrendCard orders={orders} />
+          <RetailerTrendCard orders={allOrders} />
 
-          <RetailerLocationsCard orders={orders} />
+          <RetailerLocationsCard orders={allOrders} />
         </section>
 
         {showQrModal && (
