@@ -133,15 +133,21 @@ export default function Navbar({ live = false }: Props) {
 
               <button
                 className="
-                  w-full
-                  text-left
-                  px-4
-                  py-3
-                  rounded-xl
-                  hover:bg-red-50
-                  text-red-600
-                  "
-                onClick={logout}
+  w-full
+  text-left
+  px-4
+  py-3
+  rounded-xl
+  hover:bg-red-50
+  text-red-600
+  "
+                onClick={() => {
+                  logout();
+
+                  navigate("/login", {
+                    replace: true,
+                  });
+                }}
               >
                 Sign out
               </button>

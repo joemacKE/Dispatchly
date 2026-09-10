@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 import {
+  API_URL,
   getMyDeliveries,
   syncOfflineEvents,
   verifyPickup,
@@ -10,6 +11,8 @@ import {
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
+
+import Navbar from "../components/layout/Navbar";
 
 import RiderOrdersTable from "../components/rider/RiderOrdersTable";
 import RiderStatsCards from "../components/rider/RiderStatsCards";
@@ -56,16 +59,18 @@ function getLocation(): Promise<{
 }
 
 export default function RiderDashboardPage() {
-  const { token, user, logout } = useAuth();
+  const { token, user } = useAuth();
 
   const riderId = user?.id || "unknown";
 
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
 
   const [allDeliveries, setAllDeliveries] = useState<Delivery[]>([]);
+
   const [selectedStatus, setSelectedStatus] = useState<
     "" | "assigned" | "in_transit" | "delivered"
   >("");
+
   const [scannerOpen, setScannerOpen] = useState(false);
 
   const [scanMode, setScanMode] = useState<"pickup" | "delivery">("pickup");
@@ -79,6 +84,8 @@ export default function RiderDashboardPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
+
+  const [live, setLive] = useState(false);
 
   const [online, setOnline] = useState(navigator.onLine);
 
@@ -95,8 +102,6 @@ export default function RiderDashboardPage() {
 
         const result = await getMyDeliveries(token, status);
 
-        console.log("FILTER RESPONSE", status, result.deliveries);
-
         setDeliveries(result.deliveries ?? []);
       } catch (error) {
         setError(
@@ -108,29 +113,70 @@ export default function RiderDashboardPage() {
     },
     [token],
   );
+
   const loadAllDeliveries = useCallback(async () => {
     if (!token) {
       return;
     }
 
-    try {
-      const result = await getMyDeliveries(token);
+    const result = await getMyDeliveries(token);
 
-      setAllDeliveries(result.deliveries ?? []);
+    setAllDeliveries(result.deliveries ?? []);
 
-      setDeliveries(result.deliveries ?? []);
-    } catch (error) {
-      console.error(error);
-    }
+    setDeliveries(result.deliveries ?? []);
   }, [token]);
+
   /*
-   * This remains only so riders can
-   * resolve queues created by older
-   * versions of the application.
-   *
-   * The new pickup workflow never
-   * creates offline custody events.
-   */
+  Shared Navbar live status
+  */
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const websocketUrl = API_URL.replace(/^http/, "ws");
+
+    const socket = new WebSocket(`${websocketUrl}/ws`);
+
+    socket.addEventListener("open", () => {
+      socket.send(
+        JSON.stringify({
+          type: "auth",
+
+          token,
+        }),
+      );
+    });
+
+    socket.addEventListener("message", (event) => {
+      try {
+        const message = JSON.parse(event.data);
+
+        if (message.type === "authentication.success") {
+          setLive(true);
+        }
+
+        if (message.type?.startsWith("delivery.")) {
+          void loadAllDeliveries();
+        }
+      } catch {
+        console.error("Invalid websocket message");
+      }
+    });
+
+    socket.addEventListener("close", () => {
+      setLive(false);
+    });
+
+    socket.addEventListener("error", () => {
+      setLive(false);
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, [token, loadAllDeliveries]);
   const flushQueue = useCallback(async () => {
     if (!token || !navigator.onLine) {
       return;
@@ -229,6 +275,7 @@ export default function RiderDashboardPage() {
     }),
     [allDeliveries],
   );
+
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
@@ -264,10 +311,6 @@ export default function RiderDashboardPage() {
       });
 
       await loadDeliveries();
-    } catch (error) {
-      await loadDeliveries();
-
-      throw error;
     } finally {
       setBusyId(null);
     }
@@ -278,24 +321,12 @@ export default function RiderDashboardPage() {
       throw new Error("Authentication required");
     }
 
-    if (!navigator.onLine) {
-      throw new Error(
-        "Internet access is required to verify the delivery QR code.",
-      );
-    }
-
     const cleanedToken = qrToken
       .trim()
       .replace(/[\r\n\t]/g, "")
       .replace(/\s+/g, "");
 
-    if (!cleanedToken) {
-      throw new Error("Delivery QR token is empty.");
-    }
-
     setBusyId(delivery.id);
-
-    setError("");
 
     try {
       await verifyDelivery(token, delivery.id, {
@@ -305,14 +336,11 @@ export default function RiderDashboardPage() {
       });
 
       await loadDeliveries();
-    } catch (error) {
-      await loadDeliveries();
-
-      throw error;
     } finally {
       setBusyId(null);
     }
   }
+
   function openPickupScanner(delivery: Delivery) {
     setSelectedDelivery(delivery);
 
@@ -344,6 +372,7 @@ export default function RiderDashboardPage() {
 
     await completeDelivery(selectedDelivery, value);
   }
+
   function discardQueue() {
     const confirmed = window.confirm(
       "Discard all legacy unsynchronized rider events?",
@@ -362,21 +391,7 @@ export default function RiderDashboardPage() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div className="brand-row">
-          <div className="brand-mark small">R</div>
-
-          <div>
-            <strong>Reflex Rider</strong>
-
-            <span>{user.name}</span>
-          </div>
-        </div>
-
-        <button className="secondary-button" onClick={logout}>
-          Sign out
-        </button>
-      </header>
+      <Navbar live={live} />
 
       <main className="rider-page">
         <header className="rider-heading">
@@ -405,6 +420,7 @@ export default function RiderDashboardPage() {
           }}
         />
 
+        {error && <div className="error-box">{error}</div>}
         {!online && (
           <section className="offline-banner">
             <div>
@@ -445,8 +461,6 @@ export default function RiderDashboardPage() {
           </section>
         )}
 
-        {error && <div className="error-box">{error}</div>}
-
         <div className="panel-heading rider-toolbar">
           <strong>
             {selectedStatus
@@ -475,6 +489,7 @@ export default function RiderDashboardPage() {
             onDelivery={openDeliveryScanner}
           />
         )}
+
         {scannerOpen && (
           <QrScanner
             title={
