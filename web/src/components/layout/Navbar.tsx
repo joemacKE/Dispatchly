@@ -144,7 +144,7 @@ export default function Navbar({ live = false }: Props) {
                 onClick={() => {
                   logout();
 
-                  navigate("/login", {
+                  navigate("/", {
                     replace: true,
                   });
                 }}
