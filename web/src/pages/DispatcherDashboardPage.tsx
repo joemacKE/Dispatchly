@@ -15,11 +15,12 @@ import { useAuth } from "../auth/AuthContext";
 import DispatcherOrdersTable from "../components/dispatcher/DispatcherOrdersTable";
 
 import DispatcherStatsCards from "../components/dispatcher/DispatcherStatsCards";
+import Navbar from "../components/layout/Navbar";
 
 import type { Delivery, Rider } from "../types";
 
 export default function DispatcherDashboardPage() {
-  const { token, user, logout } = useAuth();
+  const { token, user } = useAuth();
 
   const [orders, setOrders] = useState<Delivery[]>([]);
 
@@ -210,33 +211,7 @@ export default function DispatcherDashboardPage() {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div className="brand-row">
-          <div className="brand-mark small">R</div>
-
-          <div>
-            <strong>Reflex</strong>
-
-            <span>Dispatcher Operations</span>
-          </div>
-        </div>
-
-        <div className="user-row">
-          <span className={live ? "live-pill online" : "live-pill"}>
-            {live ? "● Live" : "○ Connecting"}
-          </span>
-
-          <div>
-            <strong>{user.name}</strong>
-
-            <span>dispatcher</span>
-          </div>
-
-          <button className="secondary-button" onClick={logout}>
-            Sign out
-          </button>
-        </div>
-      </header>
+      <Navbar live={live} />
 
       <main className="dashboard">
         <header className="page-heading">
