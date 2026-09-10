@@ -3265,3 +3265,107 @@ color:white;
 border-color:#047857;
 
 }
+/* ===================================
+   Revenue Intelligence
+=================================== */
+
+
+.revenue-main {
+
+font-size:36px;
+
+font-weight:900;
+
+margin:20px 0;
+
+color:#047857;
+
+}
+
+
+
+.revenue-grid {
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:20px;
+
+}
+
+
+
+.revenue-grid div {
+
+display:flex;
+
+flex-direction:column;
+
+gap:6px;
+
+}
+
+
+
+.revenue-grid svg {
+
+color:#047857;
+
+}
+
+
+
+.revenue-grid span {
+
+font-size:13px;
+
+color:#64748b;
+
+}
+
+
+
+.revenue-grid strong {
+
+font-size:18px;
+
+color:#0f172a;
+
+}
+
+
+
+.payment-breakdown {
+
+margin-top:24px;
+
+border-top:1px solid #e2e8f0;
+
+padding-top:18px;
+
+}
+
+
+
+.payment-breakdown h4 {
+
+font-size:14px;
+
+margin-bottom:14px;
+
+}
+
+
+
+.payment-breakdown div {
+
+display:flex;
+
+justify-content:space-between;
+
+margin-bottom:10px;
+
+font-size:14px;
+
+}

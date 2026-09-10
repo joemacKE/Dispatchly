@@ -20,6 +20,7 @@ import RetailerStatsCards from "../components/retailer/RetailerStatsCards";
 import RetailerPerformanceCard from "../components/retailer/RetailerPerformanceCard";
 import RetailerTrendCard from "../components/retailer/RetailerTrendCard";
 import RetailerLocationsCard from "../components/retailer/RetailerLocationsCard";
+import RetailerRevenueCard from "../components/retailer/RetailerRevenueCard";
 import RetailerAnalyticsFilter from "../components/retailer/RetailerAnalyticsFilter";
 
 import OrdersTable from "../components/dashboard/OrdersTable";
@@ -367,6 +368,8 @@ export default function DashboardPage() {
           <RetailerTrendCard orders={analyticsOrders} />
 
           <RetailerLocationsCard orders={analyticsOrders} />
+
+          <RetailerRevenueCard orders={analyticsOrders} />
         </section>
 
         {showQrModal && (
