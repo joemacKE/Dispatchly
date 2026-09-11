@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Navigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import {
+  faCircleCheck,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 
 import {
   API_URL,
@@ -282,20 +288,67 @@ export default function DispatcherDashboardPage() {
               {riders.length === 0 ? (
                 <div className="empty-state">No active riders available.</div>
               ) : (
-                <select
-                  className="rider-select"
-                  value={selectedRiderId}
-                  disabled={loadingAssignment}
-                  onChange={(event) => setSelectedRiderId(event.target.value)}
-                >
-                  <option value="">Select rider</option>
-
+                <div className="space-y-3">
                   {riders.map((rider) => (
-                    <option key={rider.id} value={rider.id}>
-                      {rider.name}
-                    </option>
+                    <button
+                      key={rider.id}
+                      type="button"
+                      disabled={rider.availability === "busy"}
+                      onClick={() => setSelectedRiderId(rider.id)}
+                      className={`
+        w-full
+        flex
+        items-center
+        justify-between
+        rounded-xl
+        border
+        px-4
+        py-3
+        text-left
+        transition
+
+        ${
+          selectedRiderId === rider.id
+            ? "border-emerald-500 bg-emerald-50"
+            : "border-slate-200 bg-white"
+        }
+
+        ${
+          rider.availability === "busy"
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:bg-slate-50"
+        }
+
+      `}
+                    >
+                      <div>
+                        <div className="font-semibold text-slate-900">
+                          {rider.name}
+                        </div>
+
+                        <div className="text-sm text-slate-500">
+                          {rider.active_deliveries} active deliveries
+                        </div>
+                      </div>
+
+                      <div>
+                        {rider.availability === "available" ? (
+                          <FontAwesomeIcon
+                            icon={faCircleCheck}
+                            className="text-emerald-500 text-xl"
+                            title="Available"
+                          />
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faTriangleExclamation}
+                            className="text-red-500 text-xl"
+                            title="Busy"
+                          />
+                        )}
+                      </div>
+                    </button>
                   ))}
-                </select>
+                </div>
               )}
 
               <button

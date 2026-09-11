@@ -347,6 +347,109 @@ export default async function dispatchRoutes(
             });
         }
 
+                   /*
+         * ---------------------------------------------------
+         * Rider workload intelligence check
+         * ---------------------------------------------------
+         *
+         * A rider's workload is calculated from the current
+         * assignment table.
+         *
+         * Historical assignments are ignored.
+         *
+         * Active deliveries:
+         * - assigned
+         * - in_transit
+         *
+         */
+
+        const riderWorkload =
+          await client.query(
+            `
+            SELECT
+
+              COUNT(*)::int AS active_deliveries
+
+
+            FROM assignments a
+
+
+            INNER JOIN delivery_requests dr
+
+              ON dr.id =
+                 a.delivery_request_id
+
+
+            WHERE a.rider_id = $1
+
+              AND a.is_current = TRUE
+
+
+              AND dr.status IN (
+
+                'assigned',
+
+                'in_transit'
+
+              )
+
+            `,
+            [
+              rider_id,
+            ]
+          );
+
+
+        const activeDeliveries =
+          Number(
+            riderWorkload.rows[0]
+              ?.active_deliveries ?? 0
+          );
+
+
+        const MAX_ACTIVE_DELIVERIES = 3;
+
+
+        if (
+          activeDeliveries >=
+          MAX_ACTIVE_DELIVERIES
+        ) {
+
+          await client.query(
+            "ROLLBACK"
+          );
+
+
+          return reply
+            .status(400)
+            .send({
+
+              success: false,
+
+
+              error: {
+
+                code:
+                  "RIDER_BUSY",
+
+
+                message:
+                  "Selected rider has reached the maximum active delivery capacity.",
+
+
+                active_deliveries:
+                  activeDeliveries,
+
+
+                maximum_allowed:
+                  MAX_ACTIVE_DELIVERIES,
+
+              },
+
+            });
+
+        }
+
         /*
          * ---------------------------------------------------
          * 4. Generate a NEW pickup credential

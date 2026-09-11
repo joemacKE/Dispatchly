@@ -67,6 +67,10 @@ export type Rider = {
   name: string;
   phone: string;
   is_active: boolean;
+  active_deliveries: number;
+  availability:
+    | "available"
+    | "busy";
 };
 
 export type ApiErrorResponse = {
