@@ -24,6 +24,9 @@ import { buildNotification } from "../notifications/notificationHelpers";
 import DispatcherOrdersTable from "../components/dispatcher/DispatcherOrdersTable";
 
 import DispatcherStatsCards from "../components/dispatcher/DispatcherStatsCards";
+import DispatcherIntelligenceCards from "../components/dispatcher/DispatcherInteligenceCards";
+import DispatcherPriorityQueue from "../components/dispatcher/DispatcherPriorityQueue";
+import DispatcherRiderStatus from "../components/dispatcher/DispatcherRiderStatus";
 import Navbar from "../components/layout/Navbar";
 
 import type { Delivery, Rider } from "../types";
@@ -59,6 +62,9 @@ export default function DispatcherDashboardPage() {
   const [loadingAssignment, setLoadingAssignment] = useState(false);
 
   const [error, setError] = useState("");
+  const [activeInsight, setActiveInsight] = useState<
+    "unassigned" | "delayed" | "available_riders" | "busy_riders" | null
+  >(null);
 
   const [live, setLive] = useState(false);
 
@@ -249,10 +255,20 @@ export default function DispatcherDashboardPage() {
           selected={selectedStatus}
           onSelect={setSelectedStatus}
         />
+        <DispatcherIntelligenceCards
+          orders={orders}
+          riders={riders}
+          activeInsight={activeInsight}
+          setActiveInsight={setActiveInsight}
+        />
+        <section className="dispatcher-intelligence-layout">
+          <DispatcherPriorityQueue orders={orders} onAssign={openAssignModal} />
 
+          <DispatcherRiderStatus riders={riders} />
+        </section>
         {error && <div className="error-box">{error}</div>}
 
-        <section className="panel">
+        <section className="dispatcher-orders-panel">
           <div className="panel-heading">
             <h2>{selectedStatus || "All Deliveries"}</h2>
 
