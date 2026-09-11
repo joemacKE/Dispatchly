@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Navigate } from "react-router-dom";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import {
@@ -17,6 +18,7 @@ import {
 } from "../api/client";
 
 import { useAuth } from "../auth/AuthContext";
+
 import { useNotifications } from "../notifications/NotificationContext";
 
 import { buildNotification } from "../notifications/notificationHelpers";
@@ -24,30 +26,35 @@ import { buildNotification } from "../notifications/notificationHelpers";
 import DispatcherOrdersTable from "../components/dispatcher/DispatcherOrdersTable";
 
 import DispatcherStatsCards from "../components/dispatcher/DispatcherStatsCards";
+
 import DispatcherIntelligenceCards from "../components/dispatcher/DispatcherInteligenceCards";
+
 import DispatcherPriorityQueue from "../components/dispatcher/DispatcherPriorityQueue";
+
 import DispatcherRiderStatus from "../components/dispatcher/DispatcherRiderStatus";
+
+import DispatcherSidebar from "../components/layout/DispatcherSidebar";
+
 import Navbar from "../components/layout/Navbar";
 
 import type { Delivery, Rider } from "../types";
 
+type InsightType =
+  | "unassigned"
+  | "delayed"
+  | "available_riders"
+  | "busy_riders";
+
+type ViewType = "deliveries" | "dashboard";
+
 export default function DispatcherDashboardPage() {
   const { token, user } = useAuth();
+
   const { addNotification } = useNotifications();
 
   const [orders, setOrders] = useState<Delivery[]>([]);
 
   const [riders, setRiders] = useState<Rider[]>([]);
-
-  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
-    null,
-  );
-
-  const [selectedRiderId, setSelectedRiderId] = useState("");
-
-  const [showAssignModal, setShowAssignModal] = useState(false);
-
-  const [selectedStatus, setSelectedStatus] = useState("");
 
   const [stats, setStats] = useState({
     pending: 0,
@@ -59,17 +66,40 @@ export default function DispatcherDashboardPage() {
     delivered: 0,
   });
 
+  /*
+   * Default dispatcher landing view
+   *
+   * Deliveries table opens first
+   */
+
+  const [activeView, setActiveView] = useState<ViewType>("deliveries");
+
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+  const [activeInsight, setActiveInsight] = useState<InsightType | null>(null);
+
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
+    null,
+  );
+
+  const [selectedRiderId, setSelectedRiderId] = useState("");
+
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
   const [loadingAssignment, setLoadingAssignment] = useState(false);
 
   const [error, setError] = useState("");
-  const [activeInsight, setActiveInsight] = useState<
-    "unassigned" | "delayed" | "available_riders" | "busy_riders" | null
-  >(null);
 
   const [live, setLive] = useState(false);
 
+  /*
+   * Load dispatcher deliveries
+   */
+
   const loadOrders = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     try {
       const result = await getDashboardOrders(token, selectedStatus);
@@ -82,8 +112,14 @@ export default function DispatcherDashboardPage() {
     }
   }, [token, selectedStatus]);
 
+  /*
+   * Load dashboard statistics
+   */
+
   const loadStats = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     try {
       const result = await getDashboardStats(token);
@@ -104,8 +140,14 @@ export default function DispatcherDashboardPage() {
     }
   }, [token]);
 
+  /*
+   * Load riders
+   */
+
   const loadRiders = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     try {
       const result = await getRiders(token);
@@ -126,8 +168,14 @@ export default function DispatcherDashboardPage() {
     void loadRiders();
   }, [loadOrders, loadStats, loadRiders]);
 
+  /*
+   * Real-time delivery updates
+   */
+
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
 
     const socket = new WebSocket(`${API_URL.replace(/^http/, "ws")}/ws`);
 
@@ -173,8 +221,10 @@ export default function DispatcherDashboardPage() {
       setLive(false);
     };
 
-    return () => socket.close();
-  }, [token, loadOrders, loadStats]);
+    return () => {
+      socket.close();
+    };
+  }, [token, loadOrders, loadStats, addNotification]);
 
   if (!token || !user) {
     return <Navigate to="/login" replace />;
@@ -204,16 +254,13 @@ export default function DispatcherDashboardPage() {
 
       setError("");
 
-      console.log("ASSIGN DEBUG", {
-        selectedDelivery,
-        selectedRiderId,
-        version: selectedDelivery?.version,
-      });
-
       await assignDelivery(
         token,
+
         selectedDelivery.id,
+
         selectedRiderId,
+
         selectedDelivery.version,
       );
 
@@ -239,145 +286,203 @@ export default function DispatcherDashboardPage() {
     <div className="app-shell">
       <Navbar live={live} />
 
-      <main className="dashboard">
-        <header className="page-heading">
-          <p className="eyebrow">Operations</p>
-
-          <h1>Dispatcher Dashboard</h1>
-
-          <p className="muted">
-            Manage delivery allocation and rider coordination.
-          </p>
-        </header>
-
-        <DispatcherStatsCards
-          stats={stats}
-          selected={selectedStatus}
-          onSelect={setSelectedStatus}
+      <div className="dispatcher-layout">
+        <DispatcherSidebar
+          activeView={activeView}
+          setActiveView={setActiveView}
         />
-        <DispatcherIntelligenceCards
-          orders={orders}
-          riders={riders}
-          activeInsight={activeInsight}
-          setActiveInsight={setActiveInsight}
-        />
-        <section className="dispatcher-intelligence-layout">
-          <DispatcherPriorityQueue orders={orders} onAssign={openAssignModal} />
 
-          <DispatcherRiderStatus riders={riders} />
-        </section>
-        {error && <div className="error-box">{error}</div>}
+        <main className="dashboard">
+          <header className="page-heading">
+            <p className="eyebrow">Operations</p>
 
-        <section className="dispatcher-orders-panel">
-          <div className="panel-heading">
-            <h2>{selectedStatus || "All Deliveries"}</h2>
+            <h1>Dispatcher Dashboard</h1>
 
-            <p className="muted">{orders.length} deliveries</p>
-          </div>
+            <p className="muted">
+              Manage delivery allocation and rider coordination.
+            </p>
+          </header>
 
-          <DispatcherOrdersTable orders={orders} onAssign={openAssignModal} />
-        </section>
+          {error && <div className="error-box">{error}</div>}
 
-        {showAssignModal && selectedDelivery && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => {
-                  setShowAssignModal(false);
-                  setSelectedDelivery(null);
-                  setSelectedRiderId("");
-                }}
-                aria-label="Close assignment modal"
-              >
-                ×
-              </button>
+          {/* ===================================
+              DELIVERIES VIEW
+              
+              DEFAULT LOGIN VIEW
+          =================================== */}
 
-              <h2>Assign Rider</h2>
+          {activeView === "deliveries" && (
+            <section className="dispatcher-orders-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>{selectedStatus || "All Deliveries"}</h2>
 
-              <p>
-                Select rider for:{" "}
-                <strong>{selectedDelivery.customer_name}</strong>
-              </p>
-
-              {riders.length === 0 ? (
-                <div className="empty-state">No active riders available.</div>
-              ) : (
-                <div className="space-y-3">
-                  {riders.map((rider) => (
-                    <button
-                      key={rider.id}
-                      type="button"
-                      disabled={rider.availability === "busy"}
-                      onClick={() => setSelectedRiderId(rider.id)}
-                      className={`
-        w-full
-        flex
-        items-center
-        justify-between
-        rounded-xl
-        border
-        px-4
-        py-3
-        text-left
-        transition
-
-        ${
-          selectedRiderId === rider.id
-            ? "border-emerald-500 bg-emerald-50"
-            : "border-slate-200 bg-white"
-        }
-
-        ${
-          rider.availability === "busy"
-            ? "opacity-50 cursor-not-allowed"
-            : "hover:bg-slate-50"
-        }
-
-      `}
-                    >
-                      <div>
-                        <div className="font-semibold text-slate-900">
-                          {rider.name}
-                        </div>
-
-                        <div className="text-sm text-slate-500">
-                          {rider.active_deliveries} active deliveries
-                        </div>
-                      </div>
-
-                      <div>
-                        {rider.availability === "available" ? (
-                          <FontAwesomeIcon
-                            icon={faCircleCheck}
-                            className="text-emerald-500 text-xl"
-                            title="Available"
-                          />
-                        ) : (
-                          <FontAwesomeIcon
-                            icon={faTriangleExclamation}
-                            className="text-red-500 text-xl"
-                            title="Busy"
-                          />
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                  <p className="muted">{orders.length} deliveries</p>
                 </div>
-              )}
+              </div>
 
-              <button
-                className="primary-button"
-                disabled={loadingAssignment || !selectedRiderId}
-                onClick={confirmAssignment}
-              >
-                {loadingAssignment ? "Assigning..." : "Confirm Assignment"}
-              </button>
-            </div>
+              <DispatcherOrdersTable
+                orders={orders}
+                onAssign={openAssignModal}
+              />
+            </section>
+          )}
+
+          {/* ===================================
+              DASHBOARD VIEW
+
+              INTELLIGENCE ONLY
+              
+              NO ORDERS TABLE
+          =================================== */}
+
+          {activeView === "dashboard" && (
+            <>
+              <DispatcherStatsCards
+                stats={stats}
+                selected={selectedStatus}
+                onSelect={setSelectedStatus}
+              />
+
+              <DispatcherIntelligenceCards
+                orders={orders}
+                riders={riders}
+                activeInsight={activeInsight}
+                setActiveInsight={setActiveInsight}
+              />
+
+              <section className="dispatcher-intelligence-layout">
+                <DispatcherPriorityQueue
+                  orders={orders}
+                  onAssign={openAssignModal}
+                />
+
+                <DispatcherRiderStatus riders={riders} />
+              </section>
+            </>
+          )}
+        </main>
+      </div>
+
+      {/* ===================================
+          ASSIGN RIDER MODAL
+      =================================== */}
+
+      {showAssignModal && selectedDelivery && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => {
+                setShowAssignModal(false);
+
+                setSelectedDelivery(null);
+
+                setSelectedRiderId("");
+              }}
+              aria-label="Close assignment modal"
+            >
+              ×
+            </button>
+
+            <h2>Assign Rider</h2>
+
+            <p>
+              Select rider for:{" "}
+              <strong>{selectedDelivery.customer_name}</strong>
+            </p>
+
+            {riders.length === 0 ? (
+              <div className="empty-state">No active riders available.</div>
+            ) : (
+              <div className="space-y-3">
+                {riders.map((rider) => (
+                  <button
+                    key={rider.id}
+                    type="button"
+                    disabled={rider.availability === "busy"}
+                    onClick={() => setSelectedRiderId(rider.id)}
+                    className={`
+
+                      w-full
+
+                      flex
+
+                      items-center
+
+                      justify-between
+
+                      rounded-xl
+
+                      border
+
+                      px-4
+
+                      py-3
+
+                      text-left
+
+                      transition
+
+
+                      ${
+                        selectedRiderId === rider.id
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-slate-200 bg-white"
+                      }
+
+
+
+                      ${
+                        rider.availability === "busy"
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-slate-50"
+                      }
+
+
+                    `}
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-900">
+                        {rider.name}
+                      </div>
+
+                      <div className="text-sm text-slate-500">
+                        {rider.active_deliveries} active deliveries
+                      </div>
+                    </div>
+
+                    <div>
+                      {rider.availability === "available" ? (
+                        <FontAwesomeIcon
+                          icon={faCircleCheck}
+                          className="text-emerald-500 text-xl"
+                          title="Available"
+                        />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faTriangleExclamation}
+                          className="text-red-500 text-xl"
+                          title="Busy"
+                        />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <button
+              className="primary-button"
+              disabled={loadingAssignment || !selectedRiderId}
+              onClick={confirmAssignment}
+            >
+              {loadingAssignment ? "Assigning..." : "Confirm Assignment"}
+            </button>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }
